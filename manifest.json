@@ -1,0 +1,36 @@
+{
+  "manifest_version": 1,
+  "id": "tasmota-adapter",
+  "name": "Tasmota",
+  "short_name": "Tasmota",
+  "version": "0.1.0",
+  "description": "Connect your Tasmota devices",
+  "homepage_url": "https://github.com/tim-hellhake/tasmota-adapter#readme",
+  "license": "MPL-2.0",
+  "author": "Tim Hellhake",
+  "gateway_specific_settings": {
+    "webthings": {
+      "exec": "{nodeLoader} {path}",
+      "strict_min_version": "0.10.0",
+      "strict_max_version": "*",
+      "primary_type": "adapter"
+    }
+  },
+  "options": {
+    "default": {
+      "pollInterval": 1000
+    },
+    "schema": {
+      "type": "object",
+      "required": [
+        "pollInterval"
+      ],
+      "properties": {
+        "pollInterval": {
+          "type": "integer",
+          "title": "The number of milliseconds between two poll intervals"
+        }
+      }
+    }
+  }
+}

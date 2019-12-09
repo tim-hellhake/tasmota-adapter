@@ -1,0 +1,61 @@
+{
+  "name": "tasmota-adapter",
+  "display_name": "Tasmota",
+  "version": "0.1.0",
+  "description": "Connect your Tasmota devices",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc -p ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tim-hellhake/tasmota-adapter.git"
+  },
+  "author": "Tim Hellhake",
+  "license": "MPL-2.0",
+  "bugs": {
+    "url": "https://github.com/tim-hellhake/tasmota-adapter/issues"
+  },
+  "homepage": "https://github.com/tim-hellhake/tasmota-adapter#readme",
+  "files": [
+    "LICENSE",
+    "SHA256SUMS",
+    "manifest.json",
+    "lib/index.js",
+    "lib/tasmota-adapter.js"
+  ],
+  "moziot": {
+    "api": {
+      "min": 2,
+      "max": 2
+    },
+    "plugin": true,
+    "exec": "{nodeLoader} {path}",
+    "config": {
+      "pollInterval": 1000
+    },
+    "schema": {
+      "type": "object",
+      "required": [
+        "pollInterval"
+      ],
+      "properties": {
+        "pollInterval": {
+          "type": "integer",
+          "title": "The number of milliseconds between two poll intervals"
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "dnssd": "^0.4.1",
+    "node-fetch": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/dnssd": "^0.4.1",
+    "@types/node": "^12.12.16",
+    "@types/node-fetch": "^2.5.4",
+    "typescript": "^3.7.3"
+  }
+}
