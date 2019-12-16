@@ -8,7 +8,8 @@
 
 import { Adapter, Device, Property } from 'gateway-addon';
 import fetch from 'node-fetch';
-import dnssd from 'dnssd';
+import { Browser, tcp } from 'dnssd';
+import { isIPv4 } from 'net';
 
 class OnOffProperty extends Property {
   private lastState?: boolean;
@@ -80,40 +81,35 @@ class Switch extends Device {
 }
 
 export class TasmotaAdapter extends Adapter {
+  private httpBrowser?: Browser;
   private devices: { [key: string]: Switch } = {};
 
-  constructor(addonManager: any, manifest: any) {
+  constructor(addonManager: any, private manifest: any) {
     super(addonManager, manifest.display_name, manifest.id);
     addonManager.addAdapter(this);
+    this.startDiscovery();
 
-    const {
-      pollInterval
-    } = manifest.moziot.config;
+    setTimeout(() => {
+      this.stopDiscovery();
+    }, 5000);
+  }
 
-    new dnssd.Browser(dnssd.tcp('http'))
-      .on('serviceUp', async service => {
-        const host = this.removeTrailingDot(service.host);
-        const url = `${host}:${service.port}`;
-        console.log(`Discovered http service at ${url}`);
-        const result = await fetch(`http://${url}`);
+  public startPairing(_timeoutSeconds: number) {
+    console.log('Start pairing');
+    this.startDiscovery();
+  }
 
-        if (result.status == 200) {
-          const body = await result.text();
+  private startDiscovery() {
+    this.httpBrowser = new Browser(tcp('http'));
 
-          if (body.indexOf('Tasmota') >= 0) {
-            console.log(`Discovered device at ${url}`);
-            let device = this.devices[host];
+    this.httpBrowser.on('serviceUp', async service => {
+      const host = this.removeTrailingDot(service.host);
+      console.log(`Discovered http service at ${host}`);
+      const addresses: string[] = service?.addresses;
+      this.handleService(host, addresses.filter(isIPv4)[0] || host, service.port);
+    });
 
-            if (!device) {
-              device = new Switch(this, host, service?.addresses[0] || host);
-              this.devices[host] = device;
-              this.handleDeviceAdded(device);
-              device.startPolling(Math.max(pollInterval || 1000, 500));
-            }
-          }
-        }
-      })
-      .start();
+    this.httpBrowser.start();
   }
 
   private removeTrailingDot(str: string) {
@@ -122,5 +118,49 @@ export class TasmotaAdapter extends Adapter {
     }
 
     return str;
+  }
+
+  private async handleService(name: string, host: string, port: number) {
+    const {
+      pollInterval
+    } = this.manifest.moziot.config;
+
+    const url = `${host}:${port}`;
+
+    console.log(`Probing ${url}`);
+
+    const result = await fetch(`http://${url}`);
+
+    if (result.status == 200) {
+      const body = await result.text();
+
+      if (body.indexOf('Tasmota') >= 0) {
+        console.log(`Discovered Tasmota at ${name}`);
+        let device = this.devices[name];
+
+        if (!device) {
+          device = new Switch(this, name, host);
+          this.devices[name] = device;
+          this.handleDeviceAdded(device);
+          device.startPolling(Math.max(pollInterval || 1000, 500));
+        }
+      } else {
+        console.log(`${name} seems not to be a Tasmota device`);
+      }
+    } else {
+      console.log(`${name} responded with ${result.status}`);
+    }
+  }
+
+  public cancelPairing() {
+    console.log('Cancel pairing');
+    this.stopDiscovery();
+  }
+
+  private stopDiscovery() {
+    if (this.httpBrowser) {
+      this.httpBrowser.stop();
+      this.httpBrowser = undefined;
+    }
   }
 }
