@@ -49,7 +49,7 @@ class Switch extends Device {
   constructor(adapter: Adapter, id: string, private host: string) {
     super(adapter, id);
     this['@context'] = 'https://iot.mozilla.org/schemas/';
-    this['@type'] = ['Light'];
+    this['@type'] = ['SmartPlug'];
     this.name = id;
 
     this.onOffProperty = new OnOffProperty(this, async value => {
