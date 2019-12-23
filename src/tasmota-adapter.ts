@@ -37,8 +37,7 @@ class OnOffProperty extends Property {
   update(value: boolean) {
     if (this.lastState != value) {
       this.lastState = value;
-      this.setCachedValue(value);
-      this.device.notifyPropertyChanged(this);
+      this.setCachedValueAndNotify(value);
       console.log(`Value of ${this.device.name} / ${this.title} changed to ${value}`);
     }
   }
@@ -133,22 +132,19 @@ class Switch extends Device {
     const voltageDate = data['Voltage'];
 
     if (voltageDate && this.voltageProperty) {
-      this.voltageProperty.setCachedValue(voltageDate.value);
-      this.notifyPropertyChanged(this.voltageProperty);
+      this.voltageProperty.setCachedValueAndNotify(voltageDate.value);
     }
 
     const currentDate = data['Current'];
 
     if (currentDate && this.currentProperty) {
-      this.currentProperty.setCachedValue(currentDate.value);
-      this.notifyPropertyChanged(this.currentProperty);
+      this.currentProperty.setCachedValueAndNotify(currentDate.value);
     }
 
     const powerDate = data['Power'];
 
     if (powerDate && this.powerProperty) {
-      this.powerProperty.setCachedValue(powerDate.value);
-      this.notifyPropertyChanged(this.powerProperty);
+      this.powerProperty.setCachedValueAndNotify(powerDate.value);
     }
   }
 }
