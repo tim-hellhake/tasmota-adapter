@@ -26,3 +26,8 @@ jobs:
         npm run build
       env:
         CI: true
+    - name: Run tests
+      run: |
+        npm test
+      env:
+        CI: true

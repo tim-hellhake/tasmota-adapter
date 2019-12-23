@@ -10,6 +10,7 @@ import { Adapter, Device, Property } from 'gateway-addon';
 import fetch from 'node-fetch';
 import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
+import { parse, Data } from './table-parser';
 
 class OnOffProperty extends Property {
   private lastState?: boolean;
@@ -45,8 +46,11 @@ class OnOffProperty extends Property {
 
 class Switch extends Device {
   private onOffProperty: OnOffProperty;
+  private voltageProperty?: Property;
+  private powerProperty?: Property;
+  private currentProperty?: Property;
 
-  constructor(adapter: Adapter, id: string, private host: string) {
+  constructor(adapter: Adapter, id: string, private host: string, data: { [name: string]: Data }) {
     super(adapter, id);
     this['@context'] = 'https://iot.mozilla.org/schemas/';
     this['@type'] = ['SmartPlug'];
@@ -62,6 +66,49 @@ class Switch extends Device {
     });
 
     this.addProperty(this.onOffProperty);
+
+    console.log(`Parsed data: ${JSON.stringify(data)}`);
+
+    const voltageDate = data['Voltage'];
+
+    if (voltageDate) {
+      this.voltageProperty = new Property(this, 'voltage', {
+        '@type': 'VoltageProperty',
+        type: 'integer',
+        unit: 'volt',
+        title: 'Voltage'
+      });
+
+      this.addProperty(this.voltageProperty);
+    }
+
+    const currentDate = data['Current'];
+
+    if (currentDate) {
+      this.currentProperty = new Property(this, 'current', {
+        '@type': 'CurrentProperty',
+        type: 'number',
+        unit: 'ampere',
+        title: 'Current'
+      });
+
+      this.addProperty(this.currentProperty);
+    }
+
+    const powerDate = data['Power'];
+
+    if (powerDate) {
+      this.powerProperty = new Property(this, 'power', {
+        '@type': 'InstantaneousPowerProperty',
+        type: 'number',
+        unit: 'watt',
+        title: 'Power'
+      });
+
+      this.addProperty(this.powerProperty);
+    }
+
+    this.updatePowerProperties(data);
   }
 
   addProperty(property: Property) {
@@ -77,6 +124,32 @@ class Switch extends Device {
     const result = await response.json();
     const value = result.POWER == 'ON';
     this.onOffProperty.update(value);
+
+    const data = await getData(this.host);
+    this.updatePowerProperties(data);
+  }
+
+  private updatePowerProperties(data: { [name: string]: Data }) {
+    const voltageDate = data['Voltage'];
+
+    if (voltageDate && this.voltageProperty) {
+      this.voltageProperty.setCachedValue(voltageDate.value);
+      this.notifyPropertyChanged(this.voltageProperty);
+    }
+
+    const currentDate = data['Current'];
+
+    if (currentDate && this.currentProperty) {
+      this.currentProperty.setCachedValue(currentDate.value);
+      this.notifyPropertyChanged(this.currentProperty);
+    }
+
+    const powerDate = data['Power'];
+
+    if (powerDate && this.powerProperty) {
+      this.powerProperty.setCachedValue(powerDate.value);
+      this.notifyPropertyChanged(this.powerProperty);
+    }
   }
 }
 
@@ -139,7 +212,8 @@ export class TasmotaAdapter extends Adapter {
         let device = this.devices[name];
 
         if (!device) {
-          device = new Switch(this, name, host);
+          const data = await getData(url);
+          device = new Switch(this, name, host, data);
           this.devices[name] = device;
           this.handleDeviceAdded(device);
           device.startPolling(Math.max(pollInterval || 1000, 500));
@@ -163,4 +237,10 @@ export class TasmotaAdapter extends Adapter {
       this.httpBrowser = undefined;
     }
   }
+}
+
+async function getData(url: string) {
+  const response = await fetch(`http://${url}/?m=1`);
+  const stats = await response.text();
+  return parse(stats);
 }

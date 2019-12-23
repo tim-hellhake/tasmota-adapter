@@ -5,7 +5,7 @@
   "description": "Connect your Tasmota devices",
   "main": "lib/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "mocha -r ts-node/register src/**/*.spec.ts",
     "build": "tsc -p ."
   },
   "repository": {
@@ -53,9 +53,14 @@
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
+    "@types/chai": "^4.2.7",
     "@types/dnssd": "^0.4.1",
+    "@types/mocha": "^5.2.7",
     "@types/node": "^12.12.16",
     "@types/node-fetch": "^2.5.4",
+    "chai": "^4.2.0",
+    "mocha": "^6.2.2",
+    "ts-node": "^8.5.4",
     "typescript": "^3.7.3"
   }
 }
