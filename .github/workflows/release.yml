@@ -19,12 +19,14 @@ jobs:
       run: |
         npm ci
         npm run build
-        ./package.sh
     - name: Run tests
       run: |
         npm test
       env:
         CI: true
+    - name: Package project
+      run: |
+        ./package.sh
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1.0.0
