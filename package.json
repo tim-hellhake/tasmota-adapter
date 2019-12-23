@@ -23,6 +23,8 @@
     "SHA256SUMS",
     "manifest.json",
     "lib/index.js",
+    "lib/table-parser.js",
+    "lib/table-parser.spec.js",
     "lib/tasmota-adapter.js"
   ],
   "moziot": {
