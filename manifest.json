@@ -29,6 +29,10 @@
         "pollInterval": {
           "type": "integer",
           "title": "The number of milliseconds between two poll intervals"
+        },
+        "password": {
+          "type": "string",
+          "title": "The web admin password of your device (if set)"
         }
       }
     }

@@ -12,6 +12,11 @@ import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { parse, Data } from './table-parser';
 
+interface CommandResult {
+  Command: string,
+  WARNING: string
+}
+
 class OnOffProperty extends Property {
   private lastState?: boolean;
 
@@ -49,7 +54,7 @@ class Switch extends Device {
   private powerProperty?: Property;
   private currentProperty?: Property;
 
-  constructor(adapter: Adapter, id: string, private host: string, data: { [name: string]: Data }) {
+  constructor(adapter: Adapter, id: string, private host: string, private password: string, data: { [name: string]: Data }) {
     super(adapter, id);
     this['@context'] = 'https://iot.mozilla.org/schemas/';
     this['@type'] = ['SmartPlug'];
@@ -57,10 +62,22 @@ class Switch extends Device {
 
     this.onOffProperty = new OnOffProperty(this, async value => {
       const status = value ? 'ON' : 'OFF';
-      const result = await fetch(`http://${host}/cm?cmnd=Power0%20${status}`);
+      const result = await fetch(`http://${host}/cm?user=admin&password=${encodeURIComponent(password)}&cmnd=Power0%20${status}`, authConfig(password));
 
       if (result.status != 200) {
-        console.log('Could not set status');
+        console.log(`Could not set status: ${result.statusText} (${result.status})`);
+      } else {
+        const json: CommandResult = await result.json();
+
+        if (json.WARNING) {
+          if (json.WARNING) {
+            console.log(`Could not set status: ${json.WARNING}`);
+          }
+
+          if (json.Command) {
+            console.log(`Could not set status: ${json.Command}`);
+          }
+        }
       }
     });
 
@@ -119,7 +136,7 @@ class Switch extends Device {
   }
 
   public async poll() {
-    const response = await fetch(`http://${this.host}/cm?cmnd=Power`);
+    const response = await fetch(`http://${this.host}/cm?cmnd=Power`, authConfig(this.password));
     const result = await response.json();
     const value = result.POWER == 'ON';
     this.onOffProperty.update(value);
@@ -191,14 +208,15 @@ export class TasmotaAdapter extends Adapter {
 
   private async handleService(name: string, host: string, port: number) {
     const {
-      pollInterval
+      pollInterval,
+      password
     } = this.manifest.moziot.config;
 
     const url = `${host}:${port}`;
 
     console.log(`Probing ${url}`);
 
-    const result = await fetch(`http://${url}`);
+    const result = await fetch(`http://${url}`, authConfig(password));
 
     if (result.status == 200) {
       const body = await result.text();
@@ -209,7 +227,7 @@ export class TasmotaAdapter extends Adapter {
 
         if (!device) {
           const data = await getData(url);
-          device = new Switch(this, name, host, data);
+          device = new Switch(this, name, host, password, data);
           this.devices[name] = device;
           this.handleDeviceAdded(device);
           device.startPolling(Math.max(pollInterval || 1000, 500));
@@ -218,7 +236,7 @@ export class TasmotaAdapter extends Adapter {
         console.log(`${name} seems not to be a Tasmota device`);
       }
     } else {
-      console.log(`${name} responded with ${result.status}`);
+      console.log(`${name} responded with ${result.statusText} (${result.status})`);
     }
   }
 
@@ -235,8 +253,16 @@ export class TasmotaAdapter extends Adapter {
   }
 }
 
-async function getData(url: string) {
-  const response = await fetch(`http://${url}/?m=1`);
+function authConfig(password?: string) {
+  return {
+    headers: {
+      'Authorization': `Basic ${Buffer.from(`admin:${password}`).toString('base64')}`
+    }
+  };
+}
+
+async function getData(url: string, password?: string) {
+  const response = await fetch(`http://${url}/?m=1`, authConfig(password));
   const stats = await response.text();
   return parse(stats);
 }
