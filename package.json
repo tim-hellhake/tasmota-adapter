@@ -22,7 +22,9 @@
     "LICENSE",
     "SHA256SUMS",
     "manifest.json",
+    "lib/api.js",
     "lib/index.js",
+    "lib/power-plug.js",
     "lib/table-parser.js",
     "lib/table-parser.spec.js",
     "lib/tasmota-adapter.js"
