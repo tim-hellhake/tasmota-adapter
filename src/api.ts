@@ -26,3 +26,15 @@ export async function getData(host: string, password?: string) {
     const stats = await response.text();
     return parse(stats);
 }
+
+export async function getStatus(host: string, password: string, name: string) {
+    return executeCommand(host, password, `${name}`);
+}
+
+export async function setStatus(host: string, password: string, name: string, status: string) {
+    return executeCommand(host, password, `${name} ${status}`);
+}
+
+export async function executeCommand(host: string, password: string, command: string) {
+    return fetch(`http://${host}/cm?user=admin&password=${encodeURIComponent(password)}&cmnd=${encodeURIComponent(command)}`, authConfig(password));
+}

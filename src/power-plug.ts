@@ -7,9 +7,8 @@
 'use strict';
 
 import { Adapter, Device, Property } from 'gateway-addon';
-import fetch from 'node-fetch';
 import { Data } from './table-parser';
-import { CommandResult, getData, authConfig } from './api';
+import { CommandResult, getData, getStatus, setStatus } from './api';
 
 class OnOffProperty extends Property {
     private lastState?: boolean;
@@ -56,7 +55,7 @@ export class PowerPlug extends Device {
 
         this.onOffProperty = new OnOffProperty(this, async value => {
             const status = value ? 'ON' : 'OFF';
-            const result = await fetch(`http://${host}/cm?user=admin&password=${encodeURIComponent(password)}&cmnd=Power0%20${status}`, authConfig(password));
+            const result = await setStatus(host, password, 'Power0', status);
 
             if (result.status != 200) {
                 console.log(`Could not set status: ${result.statusText} (${result.status})`);
@@ -130,7 +129,7 @@ export class PowerPlug extends Device {
     }
 
     public async poll() {
-        const response = await fetch(`http://${this.host}/cm?cmnd=Power`, authConfig(this.password));
+        const response = await getStatus(this.host, this.password, 'Power');
         const result = await response.json();
         const value = result.POWER == 'ON';
         this.onOffProperty.update(value);
