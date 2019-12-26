@@ -21,8 +21,8 @@ export function authConfig(password?: string) {
     };
 }
 
-export async function getData(url: string, password?: string) {
-    const response = await fetch(`http://${url}/?m=1`, authConfig(password));
+export async function getData(host: string, password?: string) {
+    const response = await fetch(`http://${host}/?m=1`, authConfig(password));
     const stats = await response.text();
     return parse(stats);
 }
