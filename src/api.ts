@@ -6,6 +6,7 @@
 
 'use strict';
 
+import fetch from 'node-fetch';
 import { parse } from './table-parser';
 
 export interface CommandResult {
