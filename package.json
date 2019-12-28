@@ -1,7 +1,7 @@
 {
   "name": "tasmota-adapter",
   "display_name": "Tasmota",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Connect your Tasmota devices",
   "main": "lib/index.js",
   "scripts": {
