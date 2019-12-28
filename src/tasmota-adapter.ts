@@ -11,7 +11,8 @@ import fetch from 'node-fetch';
 import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { PowerPlug } from './power-plug';
-import { authConfig, getData } from './api';
+import { authConfig, getData, getStatus } from './api';
+import { Light } from './light';
 
 export class TasmotaAdapter extends Adapter {
   private httpBrowser?: Browser;
@@ -78,6 +79,16 @@ export class TasmotaAdapter extends Adapter {
           this.devices[name] = device;
           this.handleDeviceAdded(device);
           device.startPolling(Math.max(pollInterval || 1000, 500));
+
+          const response = await getStatus(host, password, 'Color');
+          const result = await response.json();
+
+          if (result.Color && result.Color.length == 6) {
+            console.log('Found color device');
+            const colorDevice = new Light(this, `${name}-color`, host, password, result.Color);
+            this.handleDeviceAdded(colorDevice);
+            colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+          }
         }
       } else {
         console.log(`${name} seems not to be a Tasmota device`);
