@@ -24,6 +24,7 @@
     "manifest.json",
     "lib/api.js",
     "lib/index.js",
+    "lib/light.js",
     "lib/power-plug.js",
     "lib/table-parser.js",
     "lib/table-parser.spec.js",
