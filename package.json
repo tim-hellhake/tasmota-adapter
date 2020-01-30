@@ -62,10 +62,10 @@
     "node-fetch": "^2.6.0"
   },
   "devDependencies": {
-    "@types/chai": "^4.2.7",
+    "@types/chai": "^4.2.8",
     "@types/dnssd": "^0.4.1",
     "@types/mocha": "^5.2.7",
-    "@types/node": "^13.1.0",
+    "@types/node": "^13.5.2",
     "@types/node-fetch": "^2.5.4",
     "chai": "^4.2.0",
     "mocha": "^6.2.2",
