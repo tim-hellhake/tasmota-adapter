@@ -70,7 +70,7 @@ export class TasmotaAdapter extends Adapter {
       const body = await result.text();
 
       if (body.indexOf('Tasmota') >= 0) {
-        console.log(`Discovered Tasmota at ${name}`);
+        console.log(`Discovered Tasmota thingamagig at ${name}`);
         let device = this.devices[name];
 
         if (!device) {
@@ -80,12 +80,20 @@ export class TasmotaAdapter extends Adapter {
           this.handleDeviceAdded(device);
           device.startPolling(Math.max(pollInterval || 1000, 500));
 
-          const response = await getStatus(host, password, 'Color');
-          const result = await response.json();
+          console.log(`Querying properties of ${name}`);
+          const colorResponse = await getStatus(host, password, 'Color');
+          const colorResult = await colorResponse.json();
+          const color = colorResult.Color ? colorResult : "";
+          console.log(`${name}-color=${color}`);
 
-          if (result.Color && result.Color.length == 6) {
-            console.log('Found color device');
-            const colorDevice = new Light(this, `${name}-color`, host, password, result.Color);
+          const dimmerResponse = await getStatus(host, password, 'Dimmer');
+          const dimmerResult = await dimmerResponse.json();
+          const dimmer = dimmerResult.Dimmer ? dimmerResult : 0;
+          console.log(`${name}-dimmer=${dimmer}`);
+
+          if (color.length == 6 || color.length == 8 || dimmer != 0) {
+            console.log('Found light device');
+            const colorDevice = new Light(this, `${name}-light`, host, password, color, dimmer);
             this.handleDeviceAdded(colorDevice);
             colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
           }
