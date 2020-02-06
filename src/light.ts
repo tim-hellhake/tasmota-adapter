@@ -69,7 +69,7 @@ class BrightnessProperty extends WritableProperty<number> {
 export class Light extends Device {
     private onOffProperty: OnOffProperty;
     private colorProperty: ColorProperty;
-    private brightnessProperty: BrightnessProperty;
+    //private brightnessProperty: BrightnessProperty;
     constructor(adapter: Adapter, id: string, private host: string, private password: string, color: string, brightness: number) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
@@ -133,7 +133,7 @@ export class Light extends Device {
                 const response = await getStatus(this.host, this.password, 'Color');
                 const result = await response.json();
 
-                if(typeof result.Color == "string") {
+                if (typeof result.Color == "string") {
                     result.Color = result.Color.substring(6);
                 }
 
@@ -171,15 +171,15 @@ export class Light extends Device {
                 const response = await getStatus(this.host, this.password, 'Dimmer');
                 const result = await response.json();
 
-                if(result.Dimmer != lastBrightness) {
+                if (result.Dimmer != lastBrightness) {
                     brightnessProperty.update(result.Dimmer);
                     lastBrightness = result.Dimmer;
                     console.log(`lastBrightness is ${lastBrightness}`);
                 }
             });
 
-        this.brightnessProperty = brightnessProperty;
-        this.addProperty(brightnessProperty);
+        //this.brightnessProperty = brightnessProperty;
+        //this.addProperty(brightnessProperty);
     }
 
     addProperty(property: Property) {
@@ -189,6 +189,6 @@ export class Light extends Device {
     public startPolling(intervalMs: number) {
         this.onOffProperty.startPolling(intervalMs);
         this.colorProperty.startPolling(intervalMs);
-        this.brightnessProperty.startPolling(intervalMs);
+        //this.brightnessProperty.startPolling(intervalMs);
     }
 }
