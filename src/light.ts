@@ -134,7 +134,7 @@ export class Light extends Device {
                 const result = await response.json();
 
                 if (typeof result.Color == "string") {
-                    result.Color = result.Color.substring(6);
+                    result.Color = result.Color.substring(0, 6);
                 }
 
                 if (result.Color != lastColor && result.Color != OFF) {
