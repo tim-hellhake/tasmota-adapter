@@ -18,7 +18,7 @@ class OnOffProperty extends Property {
             '@type': 'OnOffProperty',
             type: 'boolean',
             title: 'On',
-            description: 'Wether the device is on or off'
+            description: 'Whether the device is on or off'
         });
     }
 
