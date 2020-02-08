@@ -70,13 +70,11 @@ export class Light extends Device {
     private onOffProperty: OnOffProperty;
     private colorProperty: ColorProperty;
     //private brightnessProperty: BrightnessProperty;
-    constructor(adapter: Adapter, id: string, private host: string, private password: string, color: string, brightness: number) {
+    constructor(adapter: Adapter, id: string, private host: string, private password: string) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['Light'];
         this.name = id;
-        let lastColor = color;
-        let lastBrightness = brightness;
 
         const onOffProperty = new OnOffProperty(this,
             async value => {
@@ -133,12 +131,7 @@ export class Light extends Device {
                 const result = await response.json();
                 const color: string = result?.Color || "";
                 const rgbColor = color.substring(0, 6);
-
-                if (rgbColor != lastColor) {
-                    colorProperty.update(rgbColor);
-                    lastColor = rgbColor;
-                    console.log(`lastcolor is ${lastColor}`);
-                }
+                colorProperty.update(rgbColor);
             });
 
         this.colorProperty = colorProperty;
@@ -167,12 +160,7 @@ export class Light extends Device {
             async () => {
                 const response = await getStatus(this.host, this.password, 'Dimmer');
                 const result = await response.json();
-
-                if (result.Dimmer != lastBrightness) {
-                    brightnessProperty.update(result.Dimmer);
-                    lastBrightness = result.Dimmer;
-                    console.log(`lastBrightness is ${lastBrightness}`);
-                }
+                brightnessProperty.update(result.Dimmer);
             });
 
         //this.brightnessProperty = brightnessProperty;

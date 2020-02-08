@@ -84,13 +84,9 @@ export class TasmotaAdapter extends Adapter {
           const colorResult = await colorResponse.json();
           const color: string = colorResult?.Color || "";
 
-          const dimmerResponse = await getStatus(host, password, 'Dimmer');
-          const dimmerResult = await dimmerResponse.json();
-          const dimmer: number = dimmerResult?.Dimmer || 0;
-
           if (color.length >= 6) {
             console.log('Found color device');
-            const colorDevice = new Light(this, `${name}-color`, host, password, color, dimmer);
+            const colorDevice = new Light(this, `${name}-color`, host, password);
             this.handleDeviceAdded(colorDevice);
             colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
           }
