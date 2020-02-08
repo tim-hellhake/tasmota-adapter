@@ -131,14 +131,12 @@ export class Light extends Device {
             async () => {
                 const response = await getStatus(this.host, this.password, 'Color');
                 const result = await response.json();
+                const color: string = result?.Color || "";
+                const rgbColor = color.substring(0, 6);
 
-                if (typeof result.Color == "string") {
-                    result.Color = result.Color.substring(0, 6);
-                }
-
-                if (result.Color != lastColor) {
-                    colorProperty.update(result.Color);
-                    lastColor = result.Color;
+                if (rgbColor != lastColor) {
+                    colorProperty.update(rgbColor);
+                    lastColor = rgbColor;
                     console.log(`lastcolor is ${lastColor}`);
                 }
             });
