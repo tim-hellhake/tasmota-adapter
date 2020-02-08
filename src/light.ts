@@ -77,7 +77,6 @@ export class Light extends Device {
         this.name = id;
         let lastColor = color;
         let lastBrightness = brightness;
-        const OFF = '00000000';
 
         const onOffProperty = new OnOffProperty(this,
             async value => {
@@ -137,7 +136,7 @@ export class Light extends Device {
                     result.Color = result.Color.substring(0, 6);
                 }
 
-                if (result.Color != lastColor && result.Color != OFF) {
+                if (result.Color != lastColor) {
                     colorProperty.update(result.Color);
                     lastColor = result.Color;
                     console.log(`lastcolor is ${lastColor}`);
