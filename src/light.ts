@@ -80,7 +80,7 @@ export class Light extends Device {
 
         const onOffProperty = new OnOffProperty(this,
             async value => {
-                const status = value ? "1" : "0";
+                const status = value ? 'ON' : 'OFF';
                 const result = await setStatus(host, password, 'Power', status);
 
                 if (result.status != 200) {
@@ -102,7 +102,7 @@ export class Light extends Device {
             async () => {
                 const response = await getStatus(this.host, this.password, 'Power');
                 const result = await response.json();
-                onOffProperty.update(result.POWER != "0");
+                onOffProperty.update(result.POWER == 'ON');
             });
 
         this.onOffProperty = onOffProperty;
