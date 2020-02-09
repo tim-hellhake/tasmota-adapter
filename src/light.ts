@@ -131,7 +131,7 @@ export class Light extends Device {
                 const result = await response.json();
                 const color: string = result?.Color || "";
                 const rgbColor = color.substring(0, 6);
-                colorProperty.update(`#${rgbColor}`);
+                colorProperty.update(`#${rgbColor.toLowerCase()}`);
             });
 
         this.colorProperty = colorProperty;
