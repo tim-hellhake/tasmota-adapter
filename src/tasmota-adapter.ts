@@ -60,12 +60,7 @@ export class TasmotaAdapter extends Adapter {
         }
 
         const url = `${hostname}:${port}`;
-
-        let existingDevice = this.devices[name];
-
-        if (!existingDevice) {
-          await this.createDevice(url, name, hostname, password, pollInterval);
-        }
+        await this.createDevice(url, name, hostname, password, pollInterval);
       }
     }
 
@@ -110,11 +105,7 @@ export class TasmotaAdapter extends Adapter {
 
       if (body.indexOf('Tasmota') >= 0) {
         console.log(`Discovered Tasmota at ${name}`);
-        let device = this.devices[name];
-
-        if (!device) {
-          await this.createDevice(url, name, host, password, pollInterval);
-        }
+        await this.createDevice(url, name, host, password, pollInterval);
       } else {
         console.log(`${name} seems not to be a Tasmota device`);
       }
@@ -124,22 +115,26 @@ export class TasmotaAdapter extends Adapter {
   }
 
   private async createDevice(url: string, name: string, host: string, password: string, pollInterval: number) {
-    console.log(`Creating device ${name} (${host})`);
-    const data = await getData(url);
-    const device = new PowerPlug(this, name, host, password, data);
-    this.devices[name] = device;
-    this.handleDeviceAdded(device);
-    device.startPolling(Math.max(pollInterval || 1000, 500));
+    let existingDevice = this.devices[name];
 
-    const colorResponse = await getStatus(host, password, 'Color');
-    const colorResult = await colorResponse.json();
-    const color: string = colorResult?.Color || "";
+    if (!existingDevice) {
+      console.log(`Creating device ${name} (${host})`);
+      const data = await getData(url);
+      const device = new PowerPlug(this, name, host, password, data);
+      this.devices[name] = device;
+      this.handleDeviceAdded(device);
+      device.startPolling(Math.max(pollInterval || 1000, 500));
 
-    if (color.length >= 6) {
-      console.log('Found color device');
-      const colorDevice = new Light(this, `${name}-color`, host, password);
-      this.handleDeviceAdded(colorDevice);
-      colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+      const colorResponse = await getStatus(host, password, 'Color');
+      const colorResult = await colorResponse.json();
+      const color: string = colorResult?.Color || "";
+
+      if (color.length >= 6) {
+        console.log('Found color device');
+        const colorDevice = new Light(this, `${name}-color`, host, password);
+        this.handleDeviceAdded(colorDevice);
+        colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+      }
     }
   }
 
