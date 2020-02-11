@@ -33,6 +33,32 @@
         "password": {
           "type": "string",
           "title": "The web admin password of your device (if set)"
+        },
+        "devices": {
+          "type": "array",
+          "title": "List of device",
+          "items": {
+            "type": "object",
+            "title": "A device",
+            "required": [
+              "hostname"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "title": "The ID of the device (will be generated for you)",
+                "readOnly": true
+              },
+              "hostname": {
+                "type": "string",
+                "title": "The ip address or hostname of the device"
+              },
+              "port": {
+                "type": "integer",
+                "title": "The port of the web interface of the device"
+              }
+            }
+          }
         }
       }
     }

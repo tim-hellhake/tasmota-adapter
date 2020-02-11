@@ -6,13 +6,14 @@
 
 'use strict';
 
-import { Adapter } from 'gateway-addon';
+import { Adapter, Database } from 'gateway-addon';
 import fetch from 'node-fetch';
 import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { PowerPlug } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
 import { Light } from './light';
+import crypto from 'crypto';
 
 export class TasmotaAdapter extends Adapter {
   private httpBrowser?: Browser;
@@ -31,6 +32,41 @@ export class TasmotaAdapter extends Adapter {
   public startPairing(_timeoutSeconds: number) {
     console.log('Start pairing');
     this.startDiscovery();
+    this.load();
+  }
+
+  private async load() {
+    const {
+      pollInterval,
+      password
+    } = this.manifest.moziot.config;
+
+    const db = new Database(this.manifest.id);
+    await db.open();
+    const config = await db.loadConfig();
+
+    if (config.devices) {
+      for (const device of config.devices) {
+        if (!device.id) {
+          device.id = `${crypto.randomBytes(16).toString('hex')}`;
+        }
+
+        const {
+          hostname,
+          port
+        } = this.manifest.moziot.config;
+
+        const url = `${hostname}:${port}`;
+
+        let existingDevice = this.devices[name];
+
+        if (!existingDevice) {
+          await this.createDevice(url, name, hostname, password, pollInterval);
+        }
+      }
+    }
+
+    await db.saveConfig(config);
   }
 
   private startDiscovery() {
@@ -74,28 +110,32 @@ export class TasmotaAdapter extends Adapter {
         let device = this.devices[name];
 
         if (!device) {
-          const data = await getData(url);
-          device = new PowerPlug(this, name, host, password, data);
-          this.devices[name] = device;
-          this.handleDeviceAdded(device);
-          device.startPolling(Math.max(pollInterval || 1000, 500));
-
-          const colorResponse = await getStatus(host, password, 'Color');
-          const colorResult = await colorResponse.json();
-          const color: string = colorResult?.Color || "";
-
-          if (color.length >= 6) {
-            console.log('Found color device');
-            const colorDevice = new Light(this, `${name}-color`, host, password);
-            this.handleDeviceAdded(colorDevice);
-            colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
-          }
+          await this.createDevice(url, name, host, password, pollInterval);
         }
       } else {
         console.log(`${name} seems not to be a Tasmota device`);
       }
     } else {
       console.log(`${name} responded with ${result.statusText} (${result.status})`);
+    }
+  }
+
+  private async createDevice(url: string, name: string, host: string, password: string, pollInterval: number) {
+    const data = await getData(url);
+    const device = new PowerPlug(this, name, host, password, data);
+    this.devices[name] = device;
+    this.handleDeviceAdded(device);
+    device.startPolling(Math.max(pollInterval || 1000, 500));
+
+    const colorResponse = await getStatus(host, password, 'Color');
+    const colorResult = await colorResponse.json();
+    const color: string = colorResult?.Color || "";
+
+    if (color.length >= 6) {
+      console.log('Found color device');
+      const colorDevice = new Light(this, `${name}-color`, host, password);
+      this.handleDeviceAdded(colorDevice);
+      colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
     }
   }
 
