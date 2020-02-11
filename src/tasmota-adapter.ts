@@ -43,7 +43,7 @@ export class TasmotaAdapter extends Adapter {
       password
     } = this.manifest.moziot.config;
 
-    const db = new Database(this.manifest.id);
+    const db = new Database(this.manifest.name);
     await db.open();
     const config = await db.loadConfig();
 
