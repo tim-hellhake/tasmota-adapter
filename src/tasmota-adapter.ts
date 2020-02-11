@@ -36,6 +36,8 @@ export class TasmotaAdapter extends Adapter {
   }
 
   private async load() {
+    console.log(`Loading devices from config`);
+
     const {
       pollInterval,
       password
@@ -47,14 +49,15 @@ export class TasmotaAdapter extends Adapter {
 
     if (config.devices) {
       for (const device of config.devices) {
-        if (!device.id) {
-          device.id = `${crypto.randomBytes(16).toString('hex')}`;
-        }
-
         const {
           hostname,
           port
         } = this.manifest.moziot.config;
+
+        if (!device.id) {
+          device.id = `${crypto.randomBytes(16).toString('hex')}`;
+          console.log(`Adding id for device at ${hostname}`);
+        }
 
         const url = `${hostname}:${port}`;
 
@@ -121,6 +124,7 @@ export class TasmotaAdapter extends Adapter {
   }
 
   private async createDevice(url: string, name: string, host: string, password: string, pollInterval: number) {
+    console.log(`Creating device ${name} (${host})`);
     const data = await getData(url);
     const device = new PowerPlug(this, name, host, password, data);
     this.devices[name] = device;
