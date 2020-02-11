@@ -3,7 +3,7 @@
   "id": "tasmota-adapter",
   "name": "Tasmota",
   "short_name": "Tasmota",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "description": "Connect your Tasmota devices",
   "homepage_url": "https://github.com/tim-hellhake/tasmota-adapter#readme",
   "license": "MPL-2.0",
