@@ -52,7 +52,7 @@ export class TasmotaAdapter extends Adapter {
         const {
           hostname,
           port
-        } = this.manifest.moziot.config;
+        } = device;
 
         if (!device.id) {
           device.id = `${crypto.randomBytes(16).toString('hex')}`;
@@ -60,7 +60,7 @@ export class TasmotaAdapter extends Adapter {
         }
 
         const url = `${hostname}:${port}`;
-        await this.createDevice(url, name, hostname, password, pollInterval);
+        await this.createDevice(url, hostname, hostname, password, pollInterval);
       }
     }
 
