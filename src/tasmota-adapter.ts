@@ -12,7 +12,7 @@ import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { PowerPlug } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
-import { Light } from './light';
+import { DimmableLight, ColorLight } from './light';
 import crypto from 'crypto';
 
 export class TasmotaAdapter extends Adapter {
@@ -130,10 +130,17 @@ export class TasmotaAdapter extends Adapter {
       const color: string = colorResult?.Color || "";
 
       if (color.length >= 6) {
-        console.log('Found color device');
-        const colorDevice = new Light(this, `${name}-color`, host, password);
+        console.log('Found color light');
+        const colorDevice = new ColorLight(this, `${name}-color`, host, password);
         this.handleDeviceAdded(colorDevice);
         colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+      } else {
+        if (color.length == 2) {
+          console.log('Found dimmable light');
+          const dimmableLight = new DimmableLight(this, `${name}-light`, host, password);
+          this.handleDeviceAdded(dimmableLight);
+          dimmableLight.startPolling(Math.max(pollInterval || 1000, 500));
+        }
       }
     }
   }

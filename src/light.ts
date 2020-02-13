@@ -66,7 +66,87 @@ class BrightnessProperty extends WritableProperty<number> {
     }
 }
 
-export class Light extends Device {
+export class DimmableLight extends Device {
+    private onOffProperty: OnOffProperty;
+    private brightnessProperty: BrightnessProperty;
+
+    constructor(adapter: Adapter, id: string, private host: string, private password: string) {
+        super(adapter, id);
+        this['@context'] = 'https://iot.mozilla.org/schemas/';
+        this['@type'] = ['Light'];
+        this.name = id;
+
+        const onOffProperty = new OnOffProperty(this,
+            async value => {
+                const status = value ? 'ON' : 'OFF';
+                const result = await setStatus(host, password, 'Power', status);
+
+                if (result.status != 200) {
+                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                } else {
+                    const json: CommandResult = await result.json();
+
+                    if (json.WARNING) {
+                        if (json.WARNING) {
+                            console.log(`Could not set status: ${json.WARNING}`);
+                        }
+
+                        if (json.Command) {
+                            console.log(`Could not set status: ${json.Command}`);
+                        }
+                    }
+                }
+            },
+            async () => {
+                const response = await getStatus(this.host, this.password, 'Power');
+                const result = await response.json();
+                onOffProperty.update(result.POWER == 'ON');
+            });
+
+        this.onOffProperty = onOffProperty;
+        this.addProperty(onOffProperty);
+
+        const brightnessProperty = new BrightnessProperty(this,
+            async value => {
+                const result = await setStatus(host, password, 'Dimmer', <string><unknown>value);
+
+                if (result.status != 200) {
+                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                } else {
+                    const json: CommandResult = await result.json();
+
+                    if (json.WARNING) {
+                        if (json.WARNING) {
+                            console.log(`Could not set status: ${json.WARNING}`);
+                        }
+
+                        if (json.Command) {
+                            console.log(`Could not set status: ${json.Command}`);
+                        }
+                    }
+                }
+            },
+            async () => {
+                const response = await getStatus(this.host, this.password, 'Dimmer');
+                const result = await response.json();
+                brightnessProperty.update(result.Dimmer);
+            });
+
+        this.brightnessProperty = brightnessProperty;
+        this.addProperty(brightnessProperty);
+    }
+
+    addProperty(property: Property) {
+        this.properties.set(property.name, property);
+    }
+
+    public startPolling(intervalMs: number) {
+        this.onOffProperty.startPolling(intervalMs);
+        this.brightnessProperty.startPolling(intervalMs);
+    }
+}
+
+export class ColorLight extends Device {
     private onOffProperty: OnOffProperty;
     private colorProperty: ColorProperty;
     //private brightnessProperty: BrightnessProperty;
