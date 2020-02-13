@@ -66,9 +66,21 @@ class BrightnessProperty extends WritableProperty<number> {
     }
 }
 
+class ColorTemperatureProperty extends WritableProperty<number> {
+    constructor(device: Device, set: (value: number) => Promise<void>, poll: () => Promise<void>) {
+        super(device, 'on', {
+            '@type': 'ColorTemperatureProperty',
+            type: 'number',
+            title: 'On',
+            description: 'Color temperature of the device'
+        }, set, poll);
+    }
+}
+
 export class Light extends Device {
     private onOffProperty: OnOffProperty;
     private colorProperty: ColorProperty;
+    private colorTemperatureProperty: ColorTemperatureProperty;
     //private brightnessProperty: BrightnessProperty;
     constructor(adapter: Adapter, id: string, private host: string, private password: string) {
         super(adapter, id);
@@ -165,6 +177,36 @@ export class Light extends Device {
 
         //this.brightnessProperty = brightnessProperty;
         //this.addProperty(brightnessProperty);
+        
+        const colorTemperatureProperty = new ColorTemperatureProperty(this,
+            async value => {
+                const result = await setStatus(host, password, 'CT', `#${value}`);
+
+                if (result.status != 200) {
+                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                } else {
+                    const json: CommandResult = await result.json();
+
+                    if (json.WARNING) {
+                        if (json.WARNING) {
+                            console.log(`Could not set status: ${json.WARNING}`);
+                        }
+
+                        if (json.Command) {
+                            console.log(`Could not set status: ${json.Command}`);
+                        }
+                    }
+                }
+            },
+            async () => {
+                const response = await getStatus(this.host, this.password, 'CT');
+                const result = await response.json();
+                const ct: number = result?.CT || 0;
+                colorTemperatureProperty.update(ct);
+            });
+
+        this.colorTemperatureProperty = colorTemperatureProperty;
+        this.addProperty(colorTemperatureProperty);
     }
 
     addProperty(property: Property) {
@@ -175,5 +217,6 @@ export class Light extends Device {
         this.onOffProperty.startPolling(intervalMs);
         this.colorProperty.startPolling(intervalMs);
         //this.brightnessProperty.startPolling(intervalMs);
+        this.colorTemperatureProperty.startPolling(intervalMs);
     }
 }

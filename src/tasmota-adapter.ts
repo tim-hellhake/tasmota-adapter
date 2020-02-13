@@ -129,7 +129,11 @@ export class TasmotaAdapter extends Adapter {
       const colorResult = await colorResponse.json();
       const color: string = colorResult?.Color || "";
 
-      if (color.length >= 6) {
+      const ctResponse = await getStatus(host, password, 'CT');
+      const ctResult = await ctResponse.json();
+      const ct: number = ctResult?.CT || 0;
+
+      if (color.length >= 6 || ct != 0) {
         console.log('Found color device');
         const colorDevice = new Light(this, `${name}-color`, host, password);
         this.handleDeviceAdded(colorDevice);
