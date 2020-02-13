@@ -34,159 +34,49 @@ class WritableProperty<T> extends Property {
 }
 
 class OnOffProperty extends WritableProperty<boolean> {
-    constructor(device: Device, set: (value: boolean) => Promise<void>, poll: () => Promise<void>) {
+    constructor(device: Device, host: string, password: string) {
         super(device, 'on', {
             '@type': 'OnOffProperty',
             type: 'boolean',
             title: 'On',
             description: 'Whether the device is on or off'
-        }, set, poll);
+        },
+            async value => {
+                const status = value ? 'ON' : 'OFF';
+                const result = await setStatus(host, password, 'Power', status);
+
+                if (result.status != 200) {
+                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                } else {
+                    const json: CommandResult = await result.json();
+
+                    if (json.WARNING) {
+                        if (json.WARNING) {
+                            console.log(`Could not set status: ${json.WARNING}`);
+                        }
+
+                        if (json.Command) {
+                            console.log(`Could not set status: ${json.Command}`);
+                        }
+                    }
+                }
+            },
+            async () => {
+                const response = await getStatus(host, password, 'Power');
+                const result = await response.json();
+                this.update(result.POWER == 'ON');
+            });
     }
 }
 
 class ColorProperty extends WritableProperty<string> {
-    constructor(device: Device, set: (value: string) => Promise<void>, poll: () => Promise<void>) {
+    constructor(device: Device, host: string, password: string) {
         super(device, 'color', {
             '@type': 'ColorProperty',
             type: 'string',
             title: 'Color',
             description: 'The color of the light'
-        }, set, poll);
-    }
-}
-
-class BrightnessProperty extends WritableProperty<number> {
-    constructor(device: Device, set: (value: number) => Promise<void>, poll: () => Promise<void>) {
-        super(device, 'brightness', {
-            '@type': 'BrightnessProperty',
-            type: 'integer',
-            title: 'Brightness',
-            description: 'The brightness of the light'
-        }, set, poll);
-    }
-}
-
-export class DimmableLight extends Device {
-    private onOffProperty: OnOffProperty;
-    private brightnessProperty: BrightnessProperty;
-
-    constructor(adapter: Adapter, id: string, private host: string, private password: string) {
-        super(adapter, id);
-        this['@context'] = 'https://iot.mozilla.org/schemas/';
-        this['@type'] = ['Light'];
-        this.name = id;
-
-        const onOffProperty = new OnOffProperty(this,
-            async value => {
-                const status = value ? 'ON' : 'OFF';
-                const result = await setStatus(host, password, 'Power', status);
-
-                if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
-                } else {
-                    const json: CommandResult = await result.json();
-
-                    if (json.WARNING) {
-                        if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
-                        }
-
-                        if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
-                        }
-                    }
-                }
-            },
-            async () => {
-                const response = await getStatus(this.host, this.password, 'Power');
-                const result = await response.json();
-                onOffProperty.update(result.POWER == 'ON');
-            });
-
-        this.onOffProperty = onOffProperty;
-        this.addProperty(onOffProperty);
-
-        const brightnessProperty = new BrightnessProperty(this,
-            async value => {
-                const result = await setStatus(host, password, 'Dimmer', <string><unknown>value);
-
-                if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
-                } else {
-                    const json: CommandResult = await result.json();
-
-                    if (json.WARNING) {
-                        if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
-                        }
-
-                        if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
-                        }
-                    }
-                }
-            },
-            async () => {
-                const response = await getStatus(this.host, this.password, 'Dimmer');
-                const result = await response.json();
-                brightnessProperty.update(result.Dimmer);
-            });
-
-        this.brightnessProperty = brightnessProperty;
-        this.addProperty(brightnessProperty);
-    }
-
-    addProperty(property: Property) {
-        this.properties.set(property.name, property);
-    }
-
-    public startPolling(intervalMs: number) {
-        this.onOffProperty.startPolling(intervalMs);
-        this.brightnessProperty.startPolling(intervalMs);
-    }
-}
-
-export class ColorLight extends Device {
-    private onOffProperty: OnOffProperty;
-    private colorProperty: ColorProperty;
-    //private brightnessProperty: BrightnessProperty;
-    constructor(adapter: Adapter, id: string, private host: string, private password: string) {
-        super(adapter, id);
-        this['@context'] = 'https://iot.mozilla.org/schemas/';
-        this['@type'] = ['Light'];
-        this.name = id;
-
-        const onOffProperty = new OnOffProperty(this,
-            async value => {
-                const status = value ? 'ON' : 'OFF';
-                const result = await setStatus(host, password, 'Power', status);
-
-                if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
-                } else {
-                    const json: CommandResult = await result.json();
-
-                    if (json.WARNING) {
-                        if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
-                        }
-
-                        if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
-                        }
-                    }
-                }
-            },
-            async () => {
-                const response = await getStatus(this.host, this.password, 'Power');
-                const result = await response.json();
-                onOffProperty.update(result.POWER == 'ON');
-            });
-
-        this.onOffProperty = onOffProperty;
-        this.addProperty(onOffProperty);
-
-        const colorProperty = new ColorProperty(this,
+        },
             async value => {
                 const result = await setStatus(host, password, 'Color', value);
 
@@ -207,17 +97,23 @@ export class ColorLight extends Device {
                 }
             },
             async () => {
-                const response = await getStatus(this.host, this.password, 'Color');
+                const response = await getStatus(host, password, 'Color');
                 const result = await response.json();
                 const color: string = result?.Color || "";
                 const rgbColor = color.substring(0, 6);
-                colorProperty.update(`#${rgbColor.toLowerCase()}`);
+                this.update(`#${rgbColor.toLowerCase()}`);
             });
+    }
+}
 
-        this.colorProperty = colorProperty;
-        this.addProperty(colorProperty);
-
-        const brightnessProperty = new BrightnessProperty(this,
+class BrightnessProperty extends WritableProperty<number> {
+    constructor(device: Device, host: string, password: string) {
+        super(device, 'brightness', {
+            '@type': 'BrightnessProperty',
+            type: 'integer',
+            title: 'Brightness',
+            description: 'The brightness of the light'
+        },
             async value => {
                 const result = await setStatus(host, password, 'Dimmer', <string><unknown>value);
 
@@ -238,10 +134,65 @@ export class ColorLight extends Device {
                 }
             },
             async () => {
-                const response = await getStatus(this.host, this.password, 'Dimmer');
+                const response = await getStatus(host, password, 'Dimmer');
                 const result = await response.json();
-                brightnessProperty.update(result.Dimmer);
+                this.update(result.Dimmer);
             });
+    }
+}
+
+export class DimmableLight extends Device {
+    private onOffProperty: OnOffProperty;
+    private brightnessProperty: BrightnessProperty;
+
+    constructor(adapter: Adapter, id: string, host: string, password: string) {
+        super(adapter, id);
+        this['@context'] = 'https://iot.mozilla.org/schemas/';
+        this['@type'] = ['Light'];
+        this.name = id;
+
+        const onOffProperty = new OnOffProperty(this, host, password);
+
+        this.onOffProperty = onOffProperty;
+        this.addProperty(onOffProperty);
+
+        const brightnessProperty = new BrightnessProperty(this, host, password);
+
+        this.brightnessProperty = brightnessProperty;
+        this.addProperty(brightnessProperty);
+    }
+
+    addProperty(property: Property) {
+        this.properties.set(property.name, property);
+    }
+
+    public startPolling(intervalMs: number) {
+        this.onOffProperty.startPolling(intervalMs);
+        this.brightnessProperty.startPolling(intervalMs);
+    }
+}
+
+export class ColorLight extends Device {
+    private onOffProperty: OnOffProperty;
+    private colorProperty: ColorProperty;
+    //private brightnessProperty: BrightnessProperty;
+    constructor(adapter: Adapter, id: string, host: string, password: string) {
+        super(adapter, id);
+        this['@context'] = 'https://iot.mozilla.org/schemas/';
+        this['@type'] = ['Light'];
+        this.name = id;
+
+        const onOffProperty = new OnOffProperty(this, host, password);
+
+        this.onOffProperty = onOffProperty;
+        this.addProperty(onOffProperty);
+
+        const colorProperty = new ColorProperty(this, host, password);
+
+        this.colorProperty = colorProperty;
+        this.addProperty(colorProperty);
+
+        //const brightnessProperty = new BrightnessProperty(this, host, password);
 
         //this.brightnessProperty = brightnessProperty;
         //this.addProperty(brightnessProperty);
