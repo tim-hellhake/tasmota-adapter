@@ -72,7 +72,7 @@ class ColorTemperatureProperty extends WritableProperty<number> {
             '@type': 'ColorTemperatureProperty',
             type: 'number',
             title: 'On',
-            description: 'Color temperature of the device'
+            description: 'Color temperature of the light'
         }, set, poll);
     }
 }
@@ -177,10 +177,15 @@ export class Light extends Device {
 
         //this.brightnessProperty = brightnessProperty;
         //this.addProperty(brightnessProperty);
-        
+
         const colorTemperatureProperty = new ColorTemperatureProperty(this,
             async value => {
-                const result = await setStatus(host, password, 'CT', `#${value}`);
+                var ctTasmota = (value-102500)/1095;
+                if(value != 0)
+                {
+                    console.log(`CT Kelvin: ${value}, Tasmota: ${ctTasmota}`);
+                }
+                const result = await setStatus(host, password, 'CT', `#${ctTasmota}`);
 
                 if (result.status != 200) {
                     console.log(`Could not set status: ${result.statusText} (${result.status})`);
@@ -199,10 +204,16 @@ export class Light extends Device {
                 }
             },
             async () => {
+                //const wiensDisplacement=2898000;
                 const response = await getStatus(this.host, this.password, 'CT');
                 const result = await response.json();
-                const ct: number = result?.CT || 0;
-                colorTemperatureProperty.update(ct);
+                const ctTasmota: number = result?.CT || 0;
+                const ctKelvin: number = 1095*ctTasmota+102500;
+                if(ctTasmota != 0)
+                {
+                    console.log(`CT Tasmota: ${ctTasmota}, Kelvin: ${ctKelvin}`);
+                    colorTemperatureProperty.update(ctKelvin);
+                }
             });
 
         this.colorTemperatureProperty = colorTemperatureProperty;
