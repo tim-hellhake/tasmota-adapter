@@ -146,11 +146,13 @@ class ColorTemperatureProperty extends WritableProperty<number> {
         super(device, 'colorTemperature', {
             '@type': 'ColorTemperatureProperty',
             type: 'integer',
-            title: 'ColorTemperature',
+            title: 'Color Temperature',
             description: 'The color temperature of the light'
         },
             async value => {
-                const result = await setStatus(host, password, 'CT', <string><unknown>value);
+                var ctTasmota = 500-(value-1025)/10.95+153;
+                console.log(`CT Kelvin: ${value}, Tasmota: ${ctTasmota}`);
+                const result = await setStatus(host, password, 'CT', <string><unknown>ctTasmota);
 
                 if (result.status != 200) {
                     console.log(`Could not set status: ${result.statusText} (${result.status})`);
@@ -171,7 +173,13 @@ class ColorTemperatureProperty extends WritableProperty<number> {
             async () => {
                 const response = await getStatus(host, password, 'CT');
                 const result = await response.json();
-                this.update(result.CT);
+                if(result)
+                {
+                  const ctTasmota: number = ((500-result?.CT) || 0)+153;
+                  const ctKelvin: number = 10.95*ctTasmota+1025;
+                  console.log(`CT Tasmota: ${ctTasmota}, Kelvin: ${ctKelvin}`);
+                  this.update(result.CT);
+                }
             });
     }
 }
