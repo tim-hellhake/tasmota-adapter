@@ -180,7 +180,7 @@ export class Light extends Device {
 
         const colorTemperatureProperty = new ColorTemperatureProperty(this,
             async value => {
-                var ctTasmota = (value-102500)/1095;
+                var ctTasmota = (value-102.500)/10.95;
                 if(value != 0)
                 {
                     console.log(`CT Kelvin: ${value}, Tasmota: ${ctTasmota}`);
@@ -208,7 +208,7 @@ export class Light extends Device {
                 const response = await getStatus(this.host, this.password, 'CT');
                 const result = await response.json();
                 const ctTasmota: number = result?.CT || 0;
-                const ctKelvin: number = 1095*ctTasmota+102500;
+                const ctKelvin: number = 10.95*ctTasmota+102.500;
                 if(ctTasmota != 0)
                 {
                     console.log(`CT Tasmota: ${ctTasmota}, Kelvin: ${ctKelvin}`);
