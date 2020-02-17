@@ -12,7 +12,7 @@ import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { PowerPlug } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
-import { Light } from './light';
+import { DimmableLight, ColorLight, ColorTemperatureLight } from './light';
 import crypto from 'crypto';
 
 export class TasmotaAdapter extends Adapter {
@@ -129,15 +129,23 @@ export class TasmotaAdapter extends Adapter {
       const colorResult = await colorResponse.json();
       const color: string = colorResult?.Color || "";
 
-      const ctResponse = await getStatus(host, password, 'CT');
-      const ctResult = await ctResponse.json();
-      const ct: number = ctResult?.CT || 0;
-
-      if (color.length >= 6 || ct != 0) {
-        console.log('Found color device');
-        const colorDevice = new Light(this, `${name}-color`, host, password);
+      if (color.length >= 6) {
+        console.log('Found color light');
+        const colorDevice = new ColorLight(this, `${name}-color`, host, password);
         this.handleDeviceAdded(colorDevice);
         colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+      } else {
+        if (color.length == 2) {
+          console.log('Found dimmable light');
+          const dimmableLight = new DimmableLight(this, `${name}-light`, host, password);
+          this.handleDeviceAdded(dimmableLight);
+          dimmableLight.startPolling(Math.max(pollInterval || 1000, 500));
+        } else if (color.length == 4) {
+          console.log('Found color temperature light');
+          const colorTemperatureLight = new ColorTemperatureLight(this, `${name}-light`, host, password);
+          this.handleDeviceAdded(colorTemperatureLight);
+          colorTemperatureLight.startPolling(Math.max(pollInterval || 1000, 500));
+        }
       }
     }
   }
