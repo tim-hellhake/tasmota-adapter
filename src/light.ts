@@ -150,9 +150,10 @@ class ColorTemperatureProperty extends WritableProperty<number> {
             description: 'The color temperature of the light'
         },
             async value => {
-                var ctTasmota = Math.round((value-1025)/10.95);
+                // Convert from Kelvin to the Tasmota range of 153 - 500 before setting value
+                var ctKelvin = Math.max(2700,Math.min(6500,value));
+                var ctTasmota = Math.round((ctKelvin-1025)/10.95);
                 ctTasmota = 500-ctTasmota+153;
-                console.log(`CT Kelvin: ${value}, Tasmota: ${ctTasmota}`);
                 const result = await setStatus(host, password, 'CT', <string><unknown>ctTasmota);
 
                 if (result.status != 200) {
@@ -176,9 +177,9 @@ class ColorTemperatureProperty extends WritableProperty<number> {
                 const result = await response.json();
                 if(result)
                 {
+                  // Convert from the Tasmota range of 153 - 500 to Kelvin before updating value
                   const ctTasmota: number = ((500-result?.CT) || 0)+153;
                   const ctKelvin: number = Math.round(10.95*ctTasmota+1025);
-                  //console.log(`CT Tasmota: ${ctTasmota}, Kelvin: ${ctKelvin}`);
                   this.update(ctKelvin);
                 }
             });
