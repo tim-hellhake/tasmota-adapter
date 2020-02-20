@@ -153,10 +153,10 @@ class ColorTemperatureProperty extends WritableProperty<number> {
         },
             async value => {
                 // Convert from Kelvin to the Tasmota range of 153 - 500 before setting value
-                var ctKelvin = Math.max(2700, Math.min(6500, value));
-                var ctTasmota = Math.round((ctKelvin - 1025) / 10.95);
-                ctTasmota = 500 - ctTasmota + 153;
-                const result = await setStatus(host, password, 'CT', <string><unknown>ctTasmota);
+                const ctKelvin = Math.max(2700, Math.min(6500, value));
+                const ctTasmota = Math.round((ctKelvin - 1025) / 10.95);
+                const ctTasmota2 = 500 - ctTasmota + 153;
+                const result = await setStatus(host, password, 'CT', <string><unknown>ctTasmota2);
 
                 if (result.status != 200) {
                     console.log(`Could not set status: ${result.statusText} (${result.status})`);
