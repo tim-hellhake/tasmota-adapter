@@ -24,6 +24,7 @@
     "manifest.json",
     "lib/api.js",
     "lib/ct-conversion.js",
+    "lib/ct-conversion.spec.js",
     "lib/index.js",
     "lib/light.js",
     "lib/power-plug.js",
