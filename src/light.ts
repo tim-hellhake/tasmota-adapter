@@ -115,7 +115,7 @@ class BrightnessProperty extends WritableProperty<number> {
             description: 'The brightness of the light'
         },
             async value => {
-                const result = await setStatus(host, password, 'Dimmer', <string><unknown>value);
+                const result = await setStatus(host, password, 'Dimmer', `${value}`);
 
                 if (result.status != 200) {
                     console.log(`Could not set status: ${result.statusText} (${result.status})`);
@@ -156,7 +156,7 @@ class ColorTemperatureProperty extends WritableProperty<number> {
                 const ctKelvin = Math.max(2700, Math.min(6500, value));
                 const ctTasmota = Math.round((ctKelvin - 1025) / 10.95);
                 const ctTasmota2 = 500 - ctTasmota + 153;
-                const result = await setStatus(host, password, 'CT', <string><unknown>ctTasmota2);
+                const result = await setStatus(host, password, 'CT', `${ctTasmota2}`);
 
                 if (result.status != 200) {
                     console.log(`Could not set status: ${result.statusText} (${result.status})`);
