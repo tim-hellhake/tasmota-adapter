@@ -8,6 +8,7 @@
 
 import { Adapter, Device, Property } from 'gateway-addon';
 import { CommandResult, getStatus, setStatus } from './api';
+import { kelvinToTasmota, tasmotaToKelvin } from './ct-conversion';
 
 class WritableProperty<T> extends Property {
     constructor(private device: Device, name: string, propertyDescr: {}, private set: (value: T) => Promise<void>, private poll: () => Promise<void>) {
@@ -152,11 +153,7 @@ class ColorTemperatureProperty extends WritableProperty<number> {
             maximum: 6500
         },
             async value => {
-                // Convert from Kelvin to the Tasmota range of 153 - 500 before setting value
-                const ctKelvin = Math.max(2700, Math.min(6500, value));
-                const ctTasmota = Math.round((ctKelvin - 1025) / 10.95);
-                const ctTasmota2 = 500 - ctTasmota + 153;
-                const result = await setStatus(host, password, 'CT', `${ctTasmota2}`);
+                const result = await setStatus(host, password, 'CT', `${kelvinToTasmota(value)}`);
 
                 if (result.status != 200) {
                     console.log(`Could not set status: ${result.statusText} (${result.status})`);
@@ -178,10 +175,7 @@ class ColorTemperatureProperty extends WritableProperty<number> {
                 const response = await getStatus(host, password, 'CT');
                 const result = await response.json();
                 if (result) {
-                    // Convert from the Tasmota range of 153 - 500 to Kelvin before updating value
-                    const ctTasmota: number = ((500 - result?.CT) || 0) + 153;
-                    const ctKelvin: number = Math.round(10.95 * ctTasmota + 1025);
-                    this.update(ctKelvin);
+                    this.update(tasmotaToKelvin(result?.CT));
                 }
             });
     }
