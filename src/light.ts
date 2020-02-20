@@ -141,6 +141,53 @@ class BrightnessProperty extends WritableProperty<number> {
     }
 }
 
+class ColorTemperatureProperty extends WritableProperty<number> {
+    constructor(device: Device, host: string, password: string) {
+        super(device, 'colorTemperature', {
+            '@type': 'ColorTemperatureProperty',
+            type: 'integer',
+            title: 'Color Temperature',
+            description: 'The color temperature of the light',
+            minimum: 2700,
+            maximum: 6500
+        },
+            async value => {
+                // Convert from Kelvin to the Tasmota range of 153 - 500 before setting value
+                var ctKelvin = Math.max(2700,Math.min(6500,value));
+                var ctTasmota = Math.round((ctKelvin-1025)/10.95);
+                ctTasmota = 500-ctTasmota+153;
+                const result = await setStatus(host, password, 'CT', <string><unknown>ctTasmota);
+
+                if (result.status != 200) {
+                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                } else {
+                    const json: CommandResult = await result.json();
+
+                    if (json.WARNING) {
+                        if (json.WARNING) {
+                            console.log(`Could not set status: ${json.WARNING}`);
+                        }
+
+                        if (json.Command) {
+                            console.log(`Could not set status: ${json.Command}`);
+                        }
+                    }
+                }
+            },
+            async () => {
+                const response = await getStatus(host, password, 'CT');
+                const result = await response.json();
+                if(result)
+                {
+                  // Convert from the Tasmota range of 153 - 500 to Kelvin before updating value
+                  const ctTasmota: number = ((500-result?.CT) || 0)+153;
+                  const ctKelvin: number = Math.round(10.95*ctTasmota+1025);
+                  this.update(ctKelvin);
+                }
+            });
+    }
+}
+
 export class DimmableLight extends Device {
     private onOffProperty: OnOffProperty;
     private brightnessProperty: BrightnessProperty;
@@ -169,6 +216,44 @@ export class DimmableLight extends Device {
     public startPolling(intervalMs: number) {
         this.onOffProperty.startPolling(intervalMs);
         this.brightnessProperty.startPolling(intervalMs);
+    }
+}
+
+export class ColorTemperatureLight extends Device {
+    private onOffProperty: OnOffProperty;
+    private brightnessProperty: BrightnessProperty;
+    private colorTemperatureProperty: ColorTemperatureProperty;
+
+    constructor(adapter: Adapter, id: string, host: string, password: string) {
+        super(adapter, id);
+        this['@context'] = 'https://iot.mozilla.org/schemas/';
+        this['@type'] = ['Light'];
+        this.name = id;
+
+        const onOffProperty = new OnOffProperty(this, host, password);
+
+        this.onOffProperty = onOffProperty;
+        this.addProperty(onOffProperty);
+
+        const brightnessProperty = new BrightnessProperty(this, host, password);
+
+        this.brightnessProperty = brightnessProperty;
+        this.addProperty(brightnessProperty);
+
+        const colorTemperatureProperty = new ColorTemperatureProperty(this, host, password);
+
+        this.colorTemperatureProperty = colorTemperatureProperty;
+        this.addProperty(colorTemperatureProperty);
+    }
+
+    addProperty(property: Property) {
+        this.properties.set(property.name, property);
+    }
+
+    public startPolling(intervalMs: number) {
+        this.onOffProperty.startPolling(intervalMs);
+        this.brightnessProperty.startPolling(intervalMs);
+        this.colorTemperatureProperty.startPolling(intervalMs);
     }
 }
 
