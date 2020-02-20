@@ -31,6 +31,13 @@ describe('Kelvin to Tasmota', () => {
     });
 });
 
+describe('Kelvin to Tasmota', () => {
+    it('null should translate to 500 in Tasmota range', () => {
+        const result = kelvinToTasmota(<any>null);
+        expect(result).to.eq(500);
+    });
+});
+
 describe('Tasmota to Kelvin', () => {
     it('500 in Tasmota range should translate to 2700 Kelvin', () => {
         const result = tasmotaToKelvin(500);
@@ -46,8 +53,8 @@ describe('Tasmota to Kelvin', () => {
 });
 
 describe('Tasmota to Kelvin', () => {
-    it('undefined should translate to 6500 Kelvin', () => {
-        const result = tasmotaToKelvin(<any>undefined);
-        expect(result).to.equal(2700);
+    it('null should translate to 8175 Kelvin', () => {
+        const result = tasmotaToKelvin(<any>null);
+        expect(result).to.equal(8175);
     });
 });
