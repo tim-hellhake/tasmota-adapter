@@ -70,6 +70,7 @@ class OnOffProperty extends WritableProperty<boolean> {
 }
 
 class ColorProperty extends WritableProperty<string> {
+    private channels: number;
     constructor(device: Device, host: string, password: string) {
         super(device, 'color', {
             '@type': 'ColorProperty',
@@ -78,6 +79,11 @@ class ColorProperty extends WritableProperty<string> {
             description: 'The color of the light'
         },
             async value => {
+                // If the color would be the same on all channels swap to the white channel.
+                const grey = '#' + value.substring(1,3).repeat(3);
+                if(this.channels > 3 && value == grey) {
+                    value = '#000000'+value.substring(1,3);
+                }
                 const result = await setStatus(host, password, 'Color', value);
 
                 if (result.status != 200) {
@@ -100,9 +106,18 @@ class ColorProperty extends WritableProperty<string> {
                 const response = await getStatus(host, password, 'Color');
                 const result = await response.json();
                 const color: string = result?.Color || "";
-                const rgbColor = color.substring(0, 6);
+                // Remember the number of channels for future checks.
+                if(this.channels == 0) {
+                  this.channels = color.length / 2;
+                }
+                var rgbColor = color.substring(0, 6);
+                // If the color is black and there is a white channel display grey
+                if(rgbColor == '000000' && color.length == 8) {
+                  rgbColor = color.substring(6,8).repeat(3);
+                }
                 this.update(`#${rgbColor.toLowerCase()}`);
             });
+        this.channels = 0;
     }
 }
 
