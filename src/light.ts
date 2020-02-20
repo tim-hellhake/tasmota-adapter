@@ -147,7 +147,9 @@ class ColorTemperatureProperty extends WritableProperty<number> {
             '@type': 'ColorTemperatureProperty',
             type: 'integer',
             title: 'Color Temperature',
-            description: 'The color temperature of the light'
+            description: 'The color temperature of the light',
+            minimum: 2700,
+            maximum: 6500
         },
             async value => {
                 // Convert from Kelvin to the Tasmota range of 153 - 500 before setting value
