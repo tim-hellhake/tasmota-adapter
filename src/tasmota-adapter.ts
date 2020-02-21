@@ -129,23 +129,27 @@ export class TasmotaAdapter extends Adapter {
       const colorResult = await colorResponse.json();
       const color: string = colorResult?.Color || "";
 
-      if (color.length >= 6) {
-        console.log('Found color light');
-        const colorDevice = new ColorLight(this, `${name}-color`, host, password);
-        this.handleDeviceAdded(colorDevice);
-        colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
-      } else {
-        if (color.length == 2) {
+      switch (color.length) {
+        case 2:
           console.log('Found dimmable light');
           const dimmableLight = new DimmableLight(this, `${name}-light`, host, password);
           this.handleDeviceAdded(dimmableLight);
           dimmableLight.startPolling(Math.max(pollInterval || 1000, 500));
-        } else if (color.length == 4) {
+          break;
+        case 4:
           console.log('Found color temperature light');
           const colorTemperatureLight = new ColorTemperatureLight(this, `${name}-light`, host, password);
           this.handleDeviceAdded(colorTemperatureLight);
           colorTemperatureLight.startPolling(Math.max(pollInterval || 1000, 500));
-        }
+          break;
+        case 6:
+        case 8:
+        case 10:
+          console.log('Found color light');
+          const colorDevice = new ColorLight(this, `${name}-color`, host, password);
+          this.handleDeviceAdded(colorDevice);
+          colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+          break;
       }
     }
   }
