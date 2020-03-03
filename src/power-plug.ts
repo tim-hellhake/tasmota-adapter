@@ -7,7 +7,7 @@
 'use strict';
 
 import { Adapter, Device, Property } from 'gateway-addon';
-import { Data } from './table-parser';
+import { Data, findTemperatureProperty } from './table-parser';
 import { CommandResult, getData, getStatus, setStatus } from './api';
 import { debug } from './logger';
 
@@ -47,11 +47,12 @@ export class PowerPlug extends Device {
     private voltageProperty?: Property;
     private powerProperty?: Property;
     private currentProperty?: Property;
+    private temperatureProperty?: Property;
 
     constructor(adapter: Adapter, id: string, private host: string, private password: string, data: { [name: string]: Data }) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
-        this['@type'] = ['SmartPlug'];
+        this['@type'] = ['SmartPlug', 'TemperatureSensor'];
         this.name = id;
 
         this.onOffProperty = new OnOffProperty(this, async value => {
@@ -116,6 +117,19 @@ export class PowerPlug extends Device {
             });
 
             this.addProperty(this.powerProperty);
+        }
+
+        const temperatureData = findTemperatureProperty(data);
+
+        if (temperatureData) {
+            this.temperatureProperty = new Property(this, 'power', {
+                '@type': 'TemperatureProperty',
+                type: 'number',
+                unit: temperatureData.data.symbol,
+                title: 'Temperature'
+            });
+
+            this.addProperty(this.temperatureProperty);
         }
 
         this.updatePowerProperties(data);
