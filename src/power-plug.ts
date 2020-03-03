@@ -42,12 +42,26 @@ class OnOffProperty extends Property {
     }
 }
 
+class TemperatureProperty extends Property {
+    constructor(device: Device, public dataName: string, data: Data) {
+        super(device, 'temperature', {
+            '@type': 'TemperatureProperty',
+            type: 'number',
+            unit: data.symbol,
+            multipleOf: 0.1,
+            title: 'Temperature'
+        });
+
+        this.setCachedValueAndNotify(data.value);
+    }
+}
+
 export class PowerPlug extends Device {
     private onOffProperty: OnOffProperty;
     private voltageProperty?: Property;
     private powerProperty?: Property;
     private currentProperty?: Property;
-    private temperatureProperty?: Property;
+    private temperatureProperty?: TemperatureProperty;
 
     constructor(adapter: Adapter, id: string, private host: string, private password: string, data: { [name: string]: Data }) {
         super(adapter, id);
@@ -122,13 +136,7 @@ export class PowerPlug extends Device {
         const temperatureData = findTemperatureProperty(data);
 
         if (temperatureData) {
-            this.temperatureProperty = new Property(this, 'power', {
-                '@type': 'TemperatureProperty',
-                type: 'number',
-                unit: temperatureData.data.symbol,
-                title: 'Temperature'
-            });
-
+            this.temperatureProperty = new TemperatureProperty(this, temperatureData.name, temperatureData.data);
             this.addProperty(this.temperatureProperty);
         }
 
@@ -170,6 +178,11 @@ export class PowerPlug extends Device {
 
         if (powerDate && this.powerProperty) {
             this.powerProperty.setCachedValueAndNotify(powerDate.value);
+        }
+
+        if (this.temperatureProperty) {
+            const temperatureData = data[this.temperatureProperty.dataName];
+            this.temperatureProperty.setCachedValueAndNotify(temperatureData.value);
         }
     }
 }
