@@ -99,3 +99,29 @@ describe('Table parser', () => {
         expect(result['Energy Total']?.symbol).to.equal('kWh');
     });
 });
+
+describe('Table parser', () => {
+    it('should parse the table correctly', () => {
+        const tableString = '{t}{s}Voltage{m}229 V{e}{s}Current{m}0.516 A{e}{s}Power{m}75 W{e}{s}Apparent Power{m}118 VA{e}{s}Reactive Power{m}91 VAr{e}{s}Power Factor{m}0.63{e}{s}Energy Today{m}0.445 kWh{e}{s}Energy Yesterday{m}0.870 kWh{e}{s}Energy Total{m}12.386 kWh{e}{t}ON';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(9);
+        expect(result['Voltage']?.value).to.equal(229);
+        expect(result['Voltage']?.symbol).to.equal('V');
+        expect(result['Current']?.value).to.equal(0.516);
+        expect(result['Current']?.symbol).to.equal('A');
+        expect(result['Power']?.value).to.equal(75);
+        expect(result['Power']?.symbol).to.equal('W');
+        expect(result['Apparent Power']?.value).to.equal(118);
+        expect(result['Apparent Power']?.symbol).to.equal('VA');
+        expect(result['Reactive Power']?.value).to.equal(91);
+        expect(result['Reactive Power']?.symbol).to.equal('VAr');
+        expect(result['Power Factor']?.value).to.equal(0.63);
+        expect(result['Power Factor']?.symbol).to.undefined;
+        expect(result['Energy Today']?.value).to.equal(0.445);
+        expect(result['Energy Today']?.symbol).to.equal('kWh');
+        expect(result['Energy Yesterday']?.value).to.equal(0.870);
+        expect(result['Energy Yesterday']?.symbol).to.equal('kWh');
+        expect(result['Energy Total']?.value).to.equal(12.386);
+        expect(result['Energy Total']?.symbol).to.equal('kWh');
+    });
+});
