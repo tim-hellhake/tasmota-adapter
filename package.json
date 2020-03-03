@@ -27,6 +27,7 @@
     "lib/ct-conversion.spec.js",
     "lib/index.js",
     "lib/light.js",
+    "lib/logger.js",
     "lib/power-plug.js",
     "lib/table-parser.js",
     "lib/table-parser.spec.js",
@@ -55,6 +56,16 @@
         "password": {
           "type": "string",
           "title": "The web admin password of your device (if set)"
+        },
+        "logging": {
+          "type": "object",
+          "title": "Log settings",
+          "properties": {
+            "debug": {
+              "title": "Enable debug logs",
+              "type": "boolean"
+            }
+          }
         },
         "devices": {
           "type": "array",

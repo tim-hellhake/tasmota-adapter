@@ -9,6 +9,7 @@
 import { Adapter, Device, Property } from 'gateway-addon';
 import { CommandResult, getStatus, setStatus } from './api';
 import { kelvinToTasmota, tasmotaToKelvin } from './ct-conversion';
+import { debug } from './logger';
 
 class WritableProperty<T> extends Property {
     constructor(private device: Device, name: string, propertyDescr: {}, private set: (value: T) => Promise<void>, private poll: () => Promise<void>) {
@@ -17,11 +18,11 @@ class WritableProperty<T> extends Property {
 
     async setValue(value: T) {
         try {
-            console.log(`Set value of ${this.device.name} / ${this.title} to ${value}`);
+            debug(`Set value of ${this.device.name} / ${this.title} to ${value}`);
             await super.setValue(value);
             this.set(value);
         } catch (e) {
-            console.log(`Could not set value: ${e}`);
+            debug(`Could not set value: ${e}`);
         }
     }
 
@@ -47,17 +48,17 @@ class OnOffProperty extends WritableProperty<boolean> {
                 const result = await setStatus(host, password, 'Power', status);
 
                 if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                    debug(`Could not set status: ${result.statusText} (${result.status})`);
                 } else {
                     const json: CommandResult = await result.json();
 
                     if (json.WARNING) {
                         if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
+                            debug(`Could not set status: ${json.WARNING}`);
                         }
 
                         if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
+                            debug(`Could not set status: ${json.Command}`);
                         }
                     }
                 }
@@ -82,17 +83,17 @@ class ColorProperty extends WritableProperty<string> {
                 const result = await setStatus(host, password, 'Color', value);
 
                 if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                    debug(`Could not set status: ${result.statusText} (${result.status})`);
                 } else {
                     const json: CommandResult = await result.json();
 
                     if (json.WARNING) {
                         if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
+                            debug(`Could not set status: ${json.WARNING}`);
                         }
 
                         if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
+                            debug(`Could not set status: ${json.Command}`);
                         }
                     }
                 }
@@ -119,17 +120,17 @@ class BrightnessProperty extends WritableProperty<number> {
                 const result = await setStatus(host, password, 'Dimmer', `${value}`);
 
                 if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                    debug(`Could not set status: ${result.statusText} (${result.status})`);
                 } else {
                     const json: CommandResult = await result.json();
 
                     if (json.WARNING) {
                         if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
+                            debug(`Could not set status: ${json.WARNING}`);
                         }
 
                         if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
+                            debug(`Could not set status: ${json.Command}`);
                         }
                     }
                 }
@@ -156,17 +157,17 @@ class ColorTemperatureProperty extends WritableProperty<number> {
                 const result = await setStatus(host, password, 'CT', `${kelvinToTasmota(value)}`);
 
                 if (result.status != 200) {
-                    console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                    debug(`Could not set status: ${result.statusText} (${result.status})`);
                 } else {
                     const json: CommandResult = await result.json();
 
                     if (json.WARNING) {
                         if (json.WARNING) {
-                            console.log(`Could not set status: ${json.WARNING}`);
+                            debug(`Could not set status: ${json.WARNING}`);
                         }
 
                         if (json.Command) {
-                            console.log(`Could not set status: ${json.Command}`);
+                            debug(`Could not set status: ${json.Command}`);
                         }
                     }
                 }

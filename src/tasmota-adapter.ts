@@ -14,6 +14,7 @@ import { PowerPlug } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
 import { DimmableLight, ColorLight, ColorTemperatureLight } from './light';
 import crypto from 'crypto';
+import { setup, debug } from './logger';
 
 export class TasmotaAdapter extends Adapter {
   private httpBrowser?: Browser;
@@ -22,6 +23,13 @@ export class TasmotaAdapter extends Adapter {
   constructor(addonManager: any, private manifest: any) {
     super(addonManager, manifest.display_name, manifest.id);
     addonManager.addAdapter(this);
+
+    const {
+      logging
+    } = manifest.moziot.config;
+
+    setup(logging?.debug);
+
     this.startDiscovery();
 
     setTimeout(() => {
@@ -30,13 +38,13 @@ export class TasmotaAdapter extends Adapter {
   }
 
   public startPairing(_timeoutSeconds: number) {
-    console.log('Start pairing');
+    debug('Start pairing');
     this.startDiscovery();
     this.load();
   }
 
   private async load() {
-    console.log(`Loading devices from config`);
+    debug(`Loading devices from config`);
 
     const {
       pollInterval,
@@ -56,7 +64,7 @@ export class TasmotaAdapter extends Adapter {
 
         if (!device.id) {
           device.id = `${crypto.randomBytes(16).toString('hex')}`;
-          console.log(`Adding id for device at ${hostname}`);
+          debug(`Adding id for device at ${hostname}`);
         }
 
         const url = `${hostname}:${port}`;
@@ -68,11 +76,12 @@ export class TasmotaAdapter extends Adapter {
   }
 
   private startDiscovery() {
+    debug('Starting discovery');
     this.httpBrowser = new Browser(tcp('http'));
 
     this.httpBrowser.on('serviceUp', async service => {
       const host = this.removeTrailingDot(service.host);
-      console.log(`Discovered http service at ${host}`);
+      debug(`Discovered http service at ${host}`);
       const addresses: string[] = service?.addresses;
       this.handleService(host, addresses.filter(isIPv4)[0] || host, service.port);
     });
@@ -96,7 +105,7 @@ export class TasmotaAdapter extends Adapter {
 
     const url = `${host}:${port}`;
 
-    console.log(`Probing ${url}`);
+    debug(`Probing ${url}`);
 
     const result = await fetch(`http://${url}`, authConfig(password));
 
@@ -104,13 +113,13 @@ export class TasmotaAdapter extends Adapter {
       const body = await result.text();
 
       if (body.indexOf('Tasmota') >= 0) {
-        console.log(`Discovered Tasmota at ${name}`);
+        debug(`Discovered Tasmota at ${name}`);
         await this.createDevice(url, name, host, password, pollInterval);
       } else {
-        console.log(`${name} seems not to be a Tasmota device`);
+        debug(`${name} seems not to be a Tasmota device`);
       }
     } else {
-      console.log(`${name} responded with ${result.statusText} (${result.status})`);
+      debug(`${name} responded with ${result.statusText} (${result.status})`);
     }
   }
 
@@ -118,7 +127,7 @@ export class TasmotaAdapter extends Adapter {
     let existingDevice = this.devices[name];
 
     if (!existingDevice) {
-      console.log(`Creating device ${name} (${host})`);
+      debug(`Creating device ${name} (${host})`);
       const data = await getData(url);
       const device = new PowerPlug(this, name, host, password, data);
       this.devices[name] = device;
@@ -131,13 +140,13 @@ export class TasmotaAdapter extends Adapter {
 
       switch (color.length) {
         case 2:
-          console.log('Found dimmable light');
+          debug('Found dimmable light');
           const dimmableLight = new DimmableLight(this, `${name}-light`, host, password);
           this.handleDeviceAdded(dimmableLight);
           dimmableLight.startPolling(Math.max(pollInterval || 1000, 500));
           break;
         case 4:
-          console.log('Found color temperature light');
+          debug('Found color temperature light');
           const colorTemperatureLight = new ColorTemperatureLight(this, `${name}-light`, host, password);
           this.handleDeviceAdded(colorTemperatureLight);
           colorTemperatureLight.startPolling(Math.max(pollInterval || 1000, 500));
@@ -145,7 +154,7 @@ export class TasmotaAdapter extends Adapter {
         case 6:
         case 8:
         case 10:
-          console.log('Found color light');
+          debug('Found color light');
           const colorDevice = new ColorLight(this, `${name}-color`, host, password);
           this.handleDeviceAdded(colorDevice);
           colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
@@ -155,7 +164,7 @@ export class TasmotaAdapter extends Adapter {
   }
 
   public cancelPairing() {
-    console.log('Cancel pairing');
+    debug('Cancel pairing');
     this.stopDiscovery();
   }
 

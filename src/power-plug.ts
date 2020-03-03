@@ -9,6 +9,7 @@
 import { Adapter, Device, Property } from 'gateway-addon';
 import { Data } from './table-parser';
 import { CommandResult, getData, getStatus, setStatus } from './api';
+import { debug } from './logger';
 
 class OnOffProperty extends Property {
     private lastState?: boolean;
@@ -24,11 +25,11 @@ class OnOffProperty extends Property {
 
     async setValue(value: boolean) {
         try {
-            console.log(`Set value of ${this.device.name} / ${this.title} to ${value}`);
+            debug(`Set value of ${this.device.name} / ${this.title} to ${value}`);
             await super.setValue(value);
             this.set(value);
         } catch (e) {
-            console.log(`Could not set value: ${e}`);
+            debug(`Could not set value: ${e}`);
         }
     }
 
@@ -36,7 +37,7 @@ class OnOffProperty extends Property {
         if (this.lastState != value) {
             this.lastState = value;
             this.setCachedValueAndNotify(value);
-            console.log(`Value of ${this.device.name} / ${this.title} changed to ${value}`);
+            debug(`Value of ${this.device.name} / ${this.title} changed to ${value}`);
         }
     }
 }
@@ -58,17 +59,17 @@ export class PowerPlug extends Device {
             const result = await setStatus(host, password, 'Power0', status);
 
             if (result.status != 200) {
-                console.log(`Could not set status: ${result.statusText} (${result.status})`);
+                debug(`Could not set status: ${result.statusText} (${result.status})`);
             } else {
                 const json: CommandResult = await result.json();
 
                 if (json.WARNING) {
                     if (json.WARNING) {
-                        console.log(`Could not set status: ${json.WARNING}`);
+                        debug(`Could not set status: ${json.WARNING}`);
                     }
 
                     if (json.Command) {
-                        console.log(`Could not set status: ${json.Command}`);
+                        debug(`Could not set status: ${json.Command}`);
                     }
                 }
             }
@@ -76,7 +77,7 @@ export class PowerPlug extends Device {
 
         this.addProperty(this.onOffProperty);
 
-        console.log(`Parsed data: ${JSON.stringify(data)}`);
+        debug(`Parsed data: ${JSON.stringify(data)}`);
 
         const voltageDate = data['Voltage'];
 
