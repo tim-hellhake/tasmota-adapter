@@ -129,7 +129,7 @@ export class TasmotaAdapter extends Adapter {
     if (!existingDevice) {
       debug(`Creating device ${name} (${host})`);
       const data = await getData(url);
-      const device = new PowerPlug(this, name, host, password, data);
+      const device = new PowerPlug(this, name, this.manifest, host, password, data);
       this.devices[name] = device;
       this.handleDeviceAdded(device);
       device.startPolling(Math.max(pollInterval || 1000, 500));

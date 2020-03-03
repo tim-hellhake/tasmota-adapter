@@ -63,7 +63,7 @@ export class PowerPlug extends Device {
     private currentProperty?: Property;
     private temperatureProperty?: TemperatureProperty;
 
-    constructor(adapter: Adapter, id: string, private host: string, private password: string, data: { [name: string]: Data }) {
+    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
@@ -133,11 +133,17 @@ export class PowerPlug extends Device {
             this.addProperty(this.powerProperty);
         }
 
-        const temperatureData = findTemperatureProperty(data);
+        const {
+            experimental
+        } = manifest.moziot.config;
 
-        if (temperatureData) {
-            this.temperatureProperty = new TemperatureProperty(this, temperatureData.name, temperatureData.data);
-            this.addProperty(this.temperatureProperty);
+        if (experimental?.temperatureSensor === true) {
+            const temperatureData = findTemperatureProperty(data);
+
+            if (temperatureData) {
+                this.temperatureProperty = new TemperatureProperty(this, temperatureData.name, temperatureData.data);
+                this.addProperty(this.temperatureProperty);
+            }
         }
 
         this.updatePowerProperties(data);

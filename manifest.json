@@ -44,6 +44,16 @@
             }
           }
         },
+        "experimental": {
+          "type": "object",
+          "title": "Experimental features",
+          "properties": {
+            "temperatureSensor": {
+              "title": "Enable temperature sensor support",
+              "type": "boolean"
+            }
+          }
+        },
         "devices": {
           "type": "array",
           "title": "List of device",
