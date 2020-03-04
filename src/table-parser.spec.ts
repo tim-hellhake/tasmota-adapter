@@ -157,8 +157,31 @@ describe('Table parser', () => {
 });
 
 describe('Table parser', () => {
+    it('should parse the table correctly', () => {
+        const tableString = '{t}{s}DS18B20 Temperatur{m}+25.8&deg;C{e}{t}OFFOFFOFFOFF';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(1);
+        expect(result['DS18B20 Temperatur']?.value).to.equal(25.8);
+        expect(result['DS18B20 Temperatur']?.symbol).to.equal('°C');
+    });
+});
+
+describe('Table parser', () => {
     it('should find first temperature property', () => {
         const tableString = '{t}{s}Voltage{m}229 V{e}{s}DS18B20 Temperatur{m}+25.8°C{e}{s}Sun{m}-1.8°C{e}{t}OFFOFFOFFOFF';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(3);
+        const temperatureProperty = findTemperatureProperty(result);
+        expect(temperatureProperty).to.not.undefined;
+        expect(temperatureProperty?.name).to.equal('DS18B20 Temperatur');
+        expect(temperatureProperty?.data?.value).to.equal(25.8);
+        expect(temperatureProperty?.data?.symbol).to.equal('°C');
+    });
+});
+
+describe('Table parser', () => {
+    it('should find first temperature property with escaped html chars', () => {
+        const tableString = '{t}{s}Voltage{m}229 V{e}{s}DS18B20 Temperatur{m}+25.8&deg;C{e}{s}Sun{m}-1.8°C{e}{t}OFFOFFOFFOFF';
         const result = parse(tableString);
         expect(Object.keys(result)).to.have.length(3);
         const temperatureProperty = findTemperatureProperty(result);

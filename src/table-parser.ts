@@ -48,6 +48,8 @@ function parseData(valueSymbol: string): Data {
         symbol = undefined;
     }
 
+    symbol = symbol?.replace('&deg;', '°')
+
     return {
         value: parseFloat(rawValue),
         symbol
