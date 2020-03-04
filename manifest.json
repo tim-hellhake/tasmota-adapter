@@ -75,7 +75,7 @@
               },
               "port": {
                 "type": "integer",
-                "title": "The port of the web interface of the device"
+                "title": "The port of the web interface of the device (default is 80)"
               }
             }
           }
