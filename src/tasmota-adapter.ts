@@ -10,7 +10,7 @@ import { Adapter, Database } from 'gateway-addon';
 import fetch from 'node-fetch';
 import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
-import { PowerPlug } from './power-plug';
+import { PowerPlug, OnOffProperty } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
 import { DimmableLight, ColorLight, ColorTemperatureLight } from './light';
 import crypto from 'crypto';
@@ -129,7 +129,8 @@ export class TasmotaAdapter extends Adapter {
     if (!existingDevice) {
       debug(`Creating device ${name} (${host})`);
       const data = await getData(url);
-      const device = new PowerPlug(this, name, this.manifest, host, password, data);
+      const channels = await OnOffProperty.getAvailableChannels(host, password);
+      const device = new PowerPlug(this, name, this.manifest, host, password, data, channels);
       this.devices[name] = device;
       this.handleDeviceAdded(device);
       device.startPolling(Math.max(pollInterval || 1000, 500));

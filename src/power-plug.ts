@@ -11,14 +11,14 @@ import { Data, findTemperatureProperty } from './table-parser';
 import { CommandResult, getData, getStatus, setStatus } from './api';
 import { debug } from './logger';
 
-class OnOffProperty extends Property {
+export class OnOffProperty extends Property {
     private lastState?: boolean;
 
-    constructor(private device: Device, private host: string, private password: string, private channel: string) {
-        super(device, 'on', {
+    constructor(private device: Device, id: string, title: string, private host: string, private password: string, private channel: string) {
+        super(device, id, {
             '@type': 'OnOffProperty',
             type: 'boolean',
-            title: 'On',
+            title,
             description: 'Whether the device is on or off'
         });
     }
@@ -61,6 +61,34 @@ class OnOffProperty extends Property {
             debug(`Value of ${this.device.name} / ${this.title} changed to ${value}`);
         }
     }
+
+    static async getAvailableChannels(host: string, password: string) {
+        const channels: number[] = [];
+
+        for (let i = 1; i < 10; i++) {
+            if (await OnOffProperty.isAvailable(host, password, i)) {
+                channels.push(i);
+            }
+        }
+
+        return channels;
+    }
+
+    static async isAvailable(host: string, password: string, channel: number) {
+        const command = `POWER${channel}`;
+        const result = await getStatus(host, password, command);
+        const json = await result.json();
+        const status = json[command];
+        const available = status === 'ON' || status === 'OFF';
+
+        if (available) {
+            debug(`Detected channel ${channel}`);
+        } else {
+            debug(`Channel ${channel} not available: ${JSON.stringify(json)}`);
+        }
+
+        return available;
+    }
 }
 
 class TemperatureProperty extends Property {
@@ -78,21 +106,31 @@ class TemperatureProperty extends Property {
 }
 
 export class PowerPlug extends Device {
-    private onOffProperty: OnOffProperty;
+    private onOffProperties: OnOffProperty[] = [];
     private voltageProperty?: Property;
     private powerProperty?: Property;
     private currentProperty?: Property;
     private temperatureProperty?: TemperatureProperty;
 
-    constructor(adapter: Adapter, id: string, manifest: any, private host: string, password: string, data: { [name: string]: Data }) {
+    constructor(adapter: Adapter, id: string, manifest: any, private host: string, password: string, data: { [name: string]: Data }, channels: number[]) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
         this.name = id;
 
-        this.onOffProperty = new OnOffProperty(this, host, password, '0');
-
-        this.addProperty(this.onOffProperty);
+        if (channels.length > 0) {
+            for (const channel of channels) {
+                const id = channel == 1 ? 'on' : `on${channel}`;
+                debug(`Creating property for channel ${channel}`);
+                const onOffProperty = new OnOffProperty(this, id, `Channel ${id}`, host, password, `${channel}`);
+                this.onOffProperties.push(onOffProperty);
+                this.addProperty(onOffProperty);
+            }
+        } else {
+            const onOffProperty = new OnOffProperty(this, 'on', 'On', host, password, '');
+            this.onOffProperties.push(onOffProperty);
+            this.addProperty(onOffProperty);
+        }
 
         debug(`Parsed data: ${JSON.stringify(data)}`);
 
@@ -160,7 +198,9 @@ export class PowerPlug extends Device {
     }
 
     public async poll() {
-        this.onOffProperty.updateValue();
+        for (const onOffProperty of this.onOffProperties) {
+            onOffProperty.updateValue();
+        }
 
         const data = await getData(this.host);
         this.updatePowerProperties(data);
