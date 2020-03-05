@@ -118,7 +118,11 @@ export class PowerPlug extends Device {
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
         this.name = id;
 
-        if (channels.length > 0) {
+        const {
+            experimental
+        } = manifest.moziot.config;
+
+        if (experimental?.multiChannelRelay === true && channels.length > 0) {
             for (const channel of channels) {
                 const id = channel == 1 ? 'on' : `on${channel}`;
                 debug(`Creating property for channel ${channel}`);
@@ -172,10 +176,6 @@ export class PowerPlug extends Device {
 
             this.addProperty(this.powerProperty);
         }
-
-        const {
-            experimental
-        } = manifest.moziot.config;
 
         if (experimental?.temperatureSensor === true) {
             const temperatureData = findTemperatureProperty(data);
