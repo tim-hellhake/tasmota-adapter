@@ -14,7 +14,7 @@ import { debug } from './logger';
 class OnOffProperty extends Property {
     private lastState?: boolean;
 
-    constructor(private device: Device, private set: (value: boolean) => Promise<void>) {
+    constructor(private device: Device, private host: string, private password: string, private channel: string) {
         super(device, 'on', {
             '@type': 'OnOffProperty',
             type: 'boolean',
@@ -27,13 +27,34 @@ class OnOffProperty extends Property {
         try {
             debug(`Set value of ${this.device.name} / ${this.title} to ${value}`);
             await super.setValue(value);
-            this.set(value);
+            const status = value ? 'ON' : 'OFF';
+            const result = await setStatus(this.host, this.password, `Power${this.channel}`, status);
+
+            if (result.status != 200) {
+                debug(`Could not set status: ${result.statusText} (${result.status})`);
+            } else {
+                const json: CommandResult = await result.json();
+
+                if (json.WARNING) {
+                    if (json.WARNING) {
+                        debug(`Could not set status: ${json.WARNING}`);
+                    }
+
+                    if (json.Command) {
+                        debug(`Could not set status: ${json.Command}`);
+                    }
+                }
+            }
         } catch (e) {
             debug(`Could not set value: ${e}`);
         }
     }
 
-    update(value: boolean) {
+    async updateValue() {
+        const response = await getStatus(this.host, this.password, 'Power');
+        const result = await response.json();
+        const value = result.POWER == 'ON';
+
         if (this.lastState != value) {
             this.lastState = value;
             this.setCachedValueAndNotify(value);
@@ -63,32 +84,13 @@ export class PowerPlug extends Device {
     private currentProperty?: Property;
     private temperatureProperty?: TemperatureProperty;
 
-    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }) {
+    constructor(adapter: Adapter, id: string, manifest: any, private host: string, password: string, data: { [name: string]: Data }) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
         this.name = id;
 
-        this.onOffProperty = new OnOffProperty(this, async value => {
-            const status = value ? 'ON' : 'OFF';
-            const result = await setStatus(host, password, 'Power0', status);
-
-            if (result.status != 200) {
-                debug(`Could not set status: ${result.statusText} (${result.status})`);
-            } else {
-                const json: CommandResult = await result.json();
-
-                if (json.WARNING) {
-                    if (json.WARNING) {
-                        debug(`Could not set status: ${json.WARNING}`);
-                    }
-
-                    if (json.Command) {
-                        debug(`Could not set status: ${json.Command}`);
-                    }
-                }
-            }
-        });
+        this.onOffProperty = new OnOffProperty(this, host, password, '0');
 
         this.addProperty(this.onOffProperty);
 
@@ -158,10 +160,7 @@ export class PowerPlug extends Device {
     }
 
     public async poll() {
-        const response = await getStatus(this.host, this.password, 'Power');
-        const result = await response.json();
-        const value = result.POWER == 'ON';
-        this.onOffProperty.update(value);
+        this.onOffProperty.updateValue();
 
         const data = await getData(this.host);
         this.updatePowerProperties(data);
