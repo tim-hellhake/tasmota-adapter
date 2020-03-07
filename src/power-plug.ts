@@ -126,7 +126,7 @@ export class PowerPlug extends Device {
             for (const channel of channels) {
                 const id = channel == 1 ? 'on' : `on${channel}`;
                 debug(`Creating property for channel ${channel}`);
-                const onOffProperty = new OnOffProperty(this, id, `Channel ${id}`, host, password, `${channel}`);
+                const onOffProperty = new OnOffProperty(this, id, `Channel ${channel}`, host, password, `${channel}`);
                 this.onOffProperties.push(onOffProperty);
                 this.addProperty(onOffProperty);
             }
