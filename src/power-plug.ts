@@ -116,7 +116,7 @@ export class PowerPlug extends Device {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
-        this.name = id;
+        this.name = id.replace('.local', '');
 
         const {
             experimental
