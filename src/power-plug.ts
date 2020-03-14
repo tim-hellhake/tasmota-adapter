@@ -7,7 +7,7 @@
 'use strict';
 
 import { Adapter, Device, Property } from 'gateway-addon';
-import { Data, findTemperatureProperty } from './table-parser';
+import { Data, findTemperatureProperty, findHumidityProperty } from './table-parser';
 import { CommandResult, getData, getStatus, setStatus } from './api';
 import { debug } from './logger';
 
@@ -105,12 +105,27 @@ class TemperatureProperty extends Property {
     }
 }
 
+class HumidityProperty extends Property {
+    constructor(device: Device, public dataName: string, data: Data) {
+        super(device, 'humidity', {
+            '@type': 'HumidityProperty',
+            type: 'number',
+            unit: data.symbol,
+            multipleOf: 0.1,
+            title: 'Humidity'
+        });
+
+        this.setCachedValueAndNotify(data.value);
+    }
+}
+
 export class PowerPlug extends Device {
     private onOffProperties: OnOffProperty[] = [];
     private voltageProperty?: Property;
     private powerProperty?: Property;
     private currentProperty?: Property;
     private temperatureProperty?: TemperatureProperty;
+    private humidityProperty?: HumidityProperty;
 
     constructor(adapter: Adapter, id: string, manifest: any, private host: string, password: string, data: { [name: string]: Data }, channels: number[]) {
         super(adapter, id);
@@ -190,6 +205,15 @@ export class PowerPlug extends Device {
             }
         }
 
+        if (experimental?.temperatureSensor === true) {
+            const humidityData = findHumidityProperty(data);
+
+            if (humidityData) {
+                this.humidityProperty = new HumidityProperty(this, humidityData.name, humidityData.data);
+                this.addProperty(this.humidityProperty);
+            }
+        }
+
         this.updatePowerProperties(data);
     }
 
@@ -232,6 +256,11 @@ export class PowerPlug extends Device {
         if (this.temperatureProperty) {
             const temperatureData = data[this.temperatureProperty.dataName];
             this.temperatureProperty.setCachedValueAndNotify(temperatureData.value);
+        }
+
+        if (this.humidityProperty) {
+            const humidityData = data[this.humidityProperty.dataName];
+            this.humidityProperty.setCachedValueAndNotify(humidityData.value);
         }
     }
 }

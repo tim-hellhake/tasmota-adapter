@@ -6,7 +6,7 @@
 
 'use strict';
 
-import { parse, findTemperatureProperties, findTemperatureProperty } from './table-parser';
+import { parse, findTemperatureProperties, findTemperatureProperty, findHumidityProperties, findHumidityProperty } from './table-parser';
 import { expect } from 'chai';
 import 'mocha';
 
@@ -203,5 +203,44 @@ describe('Table parser', () => {
         expect(temperatureResults['DS18B20 Temperatur']?.symbol).to.equal('°C');
         expect(temperatureResults['Sun']?.value).to.equal(-1.8);
         expect(temperatureResults['Sun']?.symbol).to.equal('°C');
+    });
+});
+
+describe('Table parser', () => {
+    it('should parse temperature and Humidity correctly', () => {
+        const tableString = '{t}{s}SI7021 Temperature{m}23.9°C{e}{s}SI7021 Humidity{m}43.2%{e}{t}OFF';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(2);
+        expect(result['SI7021 Temperature']?.value).to.equal(23.9);
+        expect(result['SI7021 Temperature']?.symbol).to.equal('°C');
+        expect(result['SI7021 Humidity']?.value).to.equal(43.2);
+        expect(result['SI7021 Humidity']?.symbol).to.equal('%');
+    });
+});
+
+describe('Table parser', () => {
+    it('should find first temperature property with escaped html chars', () => {
+        const tableString = '{t}{s}SI7021 Temperature{m}23.9°C{e}{s}SI7021 Humidity{m}43.2%{e}{s}Bath{m}34.5%{e}{t}OFF';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(3);
+        const temperatureProperty = findHumidityProperty(result);
+        expect(temperatureProperty).to.not.undefined;
+        expect(temperatureProperty?.name).to.equal('SI7021 Humidity');
+        expect(temperatureProperty?.data?.value).to.equal(43.2);
+        expect(temperatureProperty?.data?.symbol).to.equal('%');
+    });
+});
+
+describe('Table parser', () => {
+    it('should find all humidity properties', () => {
+        const tableString = '{t}{s}SI7021 Temperature{m}23.9°C{e}{s}SI7021 Humidity{m}43.2%{e}{s}Bath{m}34.5%{e}{t}OFF';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(3);
+        const humidityResults = findHumidityProperties(result);
+        expect(Object.keys(humidityResults)).to.have.length(2);
+        expect(result['SI7021 Humidity']?.value).to.equal(43.2);
+        expect(result['SI7021 Humidity']?.symbol).to.equal('%');
+        expect(result['Bath']?.value).to.equal(34.5);
+        expect(result['Bath']?.symbol).to.equal('%');
     });
 });

@@ -81,6 +81,31 @@ export function findTemperatureProperties(properties: { [name: string]: Data }):
     return result;
 }
 
+export function findHumidityProperty(properties: { [name: string]: Data }): { name: string, data: Data } | undefined {
+    for (let [name, data] of Object.entries(properties)) {
+        if (data.symbol == '%') {
+            return {
+                name,
+                data
+            }
+        }
+    }
+
+    return undefined;
+}
+
+export function findHumidityProperties(properties: { [name: string]: Data }): { [name: string]: Data } {
+    const result: { [name: string]: Data } = {}
+
+    for (let [key, value] of Object.entries(properties)) {
+        if (value.symbol == '%') {
+            result[key] = value;
+        }
+    }
+
+    return result;
+}
+
 export interface Data {
     value: number,
     symbol?: string,
