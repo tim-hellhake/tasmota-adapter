@@ -98,7 +98,8 @@ class TemperatureProperty extends Property {
             type: 'number',
             unit: data.symbol,
             multipleOf: 0.1,
-            title: 'Temperature'
+            title: 'Temperature',
+            readOnly: true
         });
 
         this.setCachedValueAndNotify(data.value);
@@ -112,7 +113,8 @@ class HumidityProperty extends Property {
             type: 'number',
             unit: data.symbol,
             multipleOf: 0.1,
-            title: 'Humidity'
+            title: 'Humidity',
+            readOnly: true
         });
 
         this.setCachedValueAndNotify(data.value);
