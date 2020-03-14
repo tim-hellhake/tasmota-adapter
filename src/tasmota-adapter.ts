@@ -30,6 +30,7 @@ export class TasmotaAdapter extends Adapter {
 
     setup(logging?.debug);
 
+    this.load();
     this.startDiscovery();
 
     setTimeout(() => {
