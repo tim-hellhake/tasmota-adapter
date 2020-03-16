@@ -126,6 +126,12 @@ export class PowerPlug extends Device {
     private voltageProperty?: Property;
     private powerProperty?: Property;
     private currentProperty?: Property;
+    private apparentPowerProperty?: Property;
+    private reactivePowerProperty?: Property;
+    private powerFactorProperty?: Property;
+    private energyTodayProperty?: Property;
+    private energyYesterdayProperty?: Property;
+    private energyTotalProperty?: Property;
     private temperatureProperty?: TemperatureProperty;
     private humidityProperty?: HumidityProperty;
 
@@ -198,6 +204,83 @@ export class PowerPlug extends Device {
             this.addProperty(this.powerProperty);
         }
 
+        const apparentPower = data['Apparent Power'];
+
+        if (apparentPower) {
+            this.apparentPowerProperty = new Property(this, 'apparentPower', {
+                type: 'number',
+                unit: 'VA',
+                title: 'Apparent Power',
+                readOnly: true
+            });
+
+            this.addProperty(this.apparentPowerProperty);
+        }
+
+        const reactivePower = data['Reactive Power'];
+
+        if (reactivePower) {
+            this.reactivePowerProperty = new Property(this, 'reactivePower', {
+                type: 'number',
+                unit: 'VAr',
+                title: 'Reactive Power',
+                readOnly: true
+            });
+
+            this.addProperty(this.reactivePowerProperty);
+        }
+
+        const powerFactor = data['Power Factor'];
+
+        if (powerFactor) {
+            this.powerFactorProperty = new Property(this, 'powerFactor', {
+                type: 'number',
+                title: 'Power Factor',
+                readOnly: true
+            });
+
+            this.addProperty(this.powerFactorProperty);
+        }
+
+        const energyToday = data['Energy Today'];
+
+        if (energyToday) {
+            this.energyTodayProperty = new Property(this, 'energyToday', {
+                type: 'number',
+                unit: 'kWh',
+                title: 'Energy Today',
+                readOnly: true
+            });
+
+            this.addProperty(this.energyTodayProperty);
+        }
+
+        const energyYesterday = data['Energy Yesterday'];
+
+        if (energyYesterday) {
+            this.energyYesterdayProperty = new Property(this, 'energyYesterday', {
+                type: 'number',
+                unit: 'kWh',
+                title: 'Energy Yesterday',
+                readOnly: true
+            });
+
+            this.addProperty(this.energyYesterdayProperty);
+        }
+
+        const energyTotal = data['Energy Total'];
+
+        if (energyTotal) {
+            this.energyTotalProperty = new Property(this, 'energyTotal', {
+                type: 'number',
+                unit: 'kWh',
+                title: 'Energy Total',
+                readOnly: true
+            });
+
+            this.addProperty(this.energyTotalProperty);
+        }
+
         if (experimental?.temperatureSensor === true) {
             const temperatureData = findTemperatureProperty(data);
 
@@ -253,6 +336,42 @@ export class PowerPlug extends Device {
 
         if (powerDate && this.powerProperty) {
             this.powerProperty.setCachedValueAndNotify(powerDate.value);
+        }
+
+        const apparentPower = data['Apparent Power'];
+
+        if (apparentPower && this.apparentPowerProperty) {
+            this.apparentPowerProperty.setCachedValueAndNotify(apparentPower.value);
+        }
+
+        const reactivePower = data['Reactive Power'];
+
+        if (reactivePower && this.reactivePowerProperty) {
+            this.reactivePowerProperty.setCachedValueAndNotify(reactivePower.value);
+        }
+
+        const powerFactor = data['Power Factor'];
+
+        if (powerFactor && this.powerFactorProperty) {
+            this.powerFactorProperty.setCachedValueAndNotify(powerFactor.value);
+        }
+
+        const energyToday = data['Energy Today'];
+
+        if (energyToday && this.energyTodayProperty) {
+            this.energyTodayProperty.setCachedValueAndNotify(energyToday.value);
+        }
+
+        const energyYesterday = data['Energy Yesterday'];
+
+        if (energyYesterday && this.energyYesterdayProperty) {
+            this.energyYesterdayProperty.setCachedValueAndNotify(energyYesterday.value);
+        }
+
+        const energyTotal = data['Energy Total'];
+
+        if (energyTotal && this.energyTotalProperty) {
+            this.energyTotalProperty.setCachedValueAndNotify(energyTotal.value);
         }
 
         if (this.temperatureProperty) {
