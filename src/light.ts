@@ -73,7 +73,7 @@ class OnOffProperty extends WritableProperty<boolean> {
 
 class ColorProperty extends WritableProperty<string> {
     private channels: number;
-    constructor(device: Device, host: string, password: string) {
+    constructor(device: Device, host: string, password: string, manifest: any) {
         super(device, 'color', {
             '@type': 'ColorProperty',
             type: 'string',
@@ -81,11 +81,19 @@ class ColorProperty extends WritableProperty<string> {
             description: 'The color of the light'
         },
             async value => {
-                // If the color would be the same on all channels swap to the white channel.
-                const grey = '#' + value.substring(1,3).repeat(3);
-                if(this.channels > 3 && value == grey) {
-                    value = '#000000'+value.substring(1,3);
+                const {
+                    experimental
+                } = manifest.moziot.config;
+
+                if (experimental?.useWhiteLedInColorMode) {
+                    // If the color would be the same on all channels swap to the white channel.
+                    const grey = '#' + value.substring(1, 3).repeat(3);
+
+                    if (this.channels > 3 && value == grey) {
+                        value = '#000000' + value.substring(1, 3);
+                    }
                 }
+
                 const result = await setStatus(host, password, 'Color', value);
 
                 if (result.status != 200) {
@@ -109,13 +117,13 @@ class ColorProperty extends WritableProperty<string> {
                 const result = await response.json();
                 const color: string = result?.Color || "";
                 // Remember the number of channels for future checks.
-                if(this.channels == 0) {
-                  this.channels = color.length / 2;
+                if (this.channels == 0) {
+                    this.channels = color.length / 2;
                 }
                 var rgbColor = color.substring(0, 6);
                 // If the color is black and there is a white channel display grey
-                if(rgbColor == '000000' && color.length == 8) {
-                  rgbColor = color.substring(6,8).repeat(3);
+                if (rgbColor == '000000' && color.length == 8) {
+                    rgbColor = color.substring(6, 8).repeat(3);
                 }
                 this.update(`#${rgbColor.toLowerCase()}`);
             });
@@ -270,7 +278,7 @@ export class ColorLight extends Device {
     private onOffProperty: OnOffProperty;
     private colorProperty: ColorProperty;
     //private brightnessProperty: BrightnessProperty;
-    constructor(adapter: Adapter, id: string, host: string, password: string) {
+    constructor(adapter: Adapter, id: string, host: string, password: string, manifest: any) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['Light'];
@@ -281,7 +289,7 @@ export class ColorLight extends Device {
         this.onOffProperty = onOffProperty;
         this.addProperty(onOffProperty);
 
-        const colorProperty = new ColorProperty(this, host, password);
+        const colorProperty = new ColorProperty(this, host, password, manifest);
 
         this.colorProperty = colorProperty;
         this.addProperty(colorProperty);

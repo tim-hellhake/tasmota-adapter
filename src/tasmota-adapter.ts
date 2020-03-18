@@ -157,7 +157,7 @@ export class TasmotaAdapter extends Adapter {
         case 8:
         case 10:
           debug('Found color light');
-          const colorDevice = new ColorLight(this, `${name}-color`, host, password);
+          const colorDevice = new ColorLight(this, `${name}-color`, host, password, this.manifest);
           this.handleDeviceAdded(colorDevice);
           colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
           break;
