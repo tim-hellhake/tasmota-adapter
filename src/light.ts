@@ -25,9 +25,9 @@ class PollingProperty<T> extends Property {
     }
 }
 
-class WritableProperty<T> extends Property {
-    constructor(private device: Device, name: string, propertyDescr: {}, private set: (value: T) => Promise<void>, private poll: () => Promise<void>) {
-        super(device, name, propertyDescr);
+class WritableProperty<T> extends PollingProperty<T> {
+    constructor(private device: Device, name: string, propertyDescr: {}, private set: (value: T) => Promise<void>, poll: () => Promise<void>) {
+        super(device, name, propertyDescr, poll);
     }
 
     async setValue(value: T) {
@@ -38,14 +38,6 @@ class WritableProperty<T> extends Property {
         } catch (e) {
             debug(`Could not set value: ${e}`);
         }
-    }
-
-    update(value: T) {
-        this.setCachedValueAndNotify(value);
-    }
-
-    public startPolling(intervalMs: number) {
-        setInterval(() => this.poll(), intervalMs);
     }
 }
 
