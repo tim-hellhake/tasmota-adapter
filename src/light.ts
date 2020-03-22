@@ -215,15 +215,12 @@ export class DimmableLight extends Device {
         this['@type'] = ['Light'];
         this.name = id;
 
-        const onOffProperty = new OnOffProperty(this, host, password);
+        this.onOffProperty = new OnOffProperty(this, host, password);
+        this.addProperty(this.onOffProperty);
 
-        this.onOffProperty = onOffProperty;
-        this.addProperty(onOffProperty);
 
-        const brightnessProperty = new BrightnessProperty(this, host, password);
-
-        this.brightnessProperty = brightnessProperty;
-        this.addProperty(brightnessProperty);
+        this.brightnessProperty = new BrightnessProperty(this, host, password);
+        this.addProperty(this.brightnessProperty);
     }
 
     addProperty(property: Property) {
@@ -247,20 +244,15 @@ export class ColorTemperatureLight extends Device {
         this['@type'] = ['Light'];
         this.name = id;
 
-        const onOffProperty = new OnOffProperty(this, host, password);
+        this.onOffProperty = new OnOffProperty(this, host, password);
+        this.addProperty(this.onOffProperty);
 
-        this.onOffProperty = onOffProperty;
-        this.addProperty(onOffProperty);
 
-        const brightnessProperty = new BrightnessProperty(this, host, password);
+        this.brightnessProperty = new BrightnessProperty(this, host, password);
+        this.addProperty(this.brightnessProperty);
 
-        this.brightnessProperty = brightnessProperty;
-        this.addProperty(brightnessProperty);
-
-        const colorTemperatureProperty = new ColorTemperatureProperty(this, host, password);
-
-        this.colorTemperatureProperty = colorTemperatureProperty;
-        this.addProperty(colorTemperatureProperty);
+        this.colorTemperatureProperty = new ColorTemperatureProperty(this, host, password);
+        this.addProperty(this.colorTemperatureProperty);
     }
 
     addProperty(property: Property) {
@@ -284,20 +276,14 @@ export class ColorLight extends Device {
         this['@type'] = ['Light'];
         this.name = id;
 
-        const onOffProperty = new OnOffProperty(this, host, password);
+        this.onOffProperty = new OnOffProperty(this, host, password);
+        this.addProperty(this.onOffProperty);
 
-        this.onOffProperty = onOffProperty;
-        this.addProperty(onOffProperty);
+        //this.brightnessProperty = new BrightnessProperty(this, host, password);
+        //this.addProperty(this.brightnessProperty);
 
-        const colorProperty = new ColorProperty(this, host, password, manifest);
-
-        this.colorProperty = colorProperty;
-        this.addProperty(colorProperty);
-
-        //const brightnessProperty = new BrightnessProperty(this, host, password);
-
-        //this.brightnessProperty = brightnessProperty;
-        //this.addProperty(brightnessProperty);
+        this.colorProperty = new ColorProperty(this, host, password, manifest);
+        this.addProperty(this.colorProperty);
     }
 
     addProperty(property: Property) {
