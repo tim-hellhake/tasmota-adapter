@@ -239,23 +239,14 @@ export class DimmableLight extends Device {
     }
 }
 
-export class ColorTemperatureLight extends Device {
-    private onOffProperty: OnOffProperty;
-    private brightnessProperty: BrightnessProperty;
+export class ColorTemperatureLight extends DimmableLight {
     private colorTemperatureProperty: ColorTemperatureProperty;
 
     constructor(adapter: Adapter, id: string, host: string, password: string) {
-        super(adapter, id);
+        super(adapter, id, host, password);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['Light'];
         this.name = id;
-
-        this.onOffProperty = new OnOffProperty(this, host, password);
-        this.addProperty(this.onOffProperty);
-
-
-        this.brightnessProperty = new BrightnessProperty(this, host, password);
-        this.addProperty(this.brightnessProperty);
 
         this.colorTemperatureProperty = new ColorTemperatureProperty(this, host, password);
         this.addProperty(this.colorTemperatureProperty);
@@ -266,28 +257,20 @@ export class ColorTemperatureLight extends Device {
     }
 
     public startPolling(intervalMs: number) {
-        this.onOffProperty.startPolling(intervalMs);
-        this.brightnessProperty.startPolling(intervalMs);
+        super.startPolling(intervalMs);
+
         this.colorTemperatureProperty.startPolling(intervalMs);
     }
 }
 
-export class ColorLight extends Device {
-    private onOffProperty: OnOffProperty;
-    private brightnessProperty: BrightnessProperty;
+export class ColorLight extends DimmableLight {
     private colorProperty: ColorProperty;
 
     constructor(adapter: Adapter, id: string, host: string, password: string, manifest: any) {
-        super(adapter, id);
+        super(adapter, id, host, password);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['Light'];
         this.name = id;
-
-        this.onOffProperty = new OnOffProperty(this, host, password);
-        this.addProperty(this.onOffProperty);
-
-        this.brightnessProperty = new BrightnessProperty(this, host, password);
-        this.addProperty(this.brightnessProperty);
 
         this.colorProperty = new ColorProperty(this, host, password, manifest);
         this.addProperty(this.colorProperty);
@@ -298,8 +281,8 @@ export class ColorLight extends Device {
     }
 
     public startPolling(intervalMs: number) {
-        this.onOffProperty.startPolling(intervalMs);
-        this.brightnessProperty.startPolling(intervalMs);
+        super.startPolling(intervalMs);
+
         this.colorProperty.startPolling(intervalMs);
     }
 }
