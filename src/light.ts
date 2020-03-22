@@ -11,6 +11,20 @@ import { CommandResult, getStatus, setStatus } from './api';
 import { kelvinToTasmota, tasmotaToKelvin } from './ct-conversion';
 import { debug } from './logger';
 
+class PollingProperty<T> extends Property {
+    constructor(device: Device, name: string, propertyDescr: {}, private poll: () => Promise<void>) {
+        super(device, name, propertyDescr);
+    }
+
+    update(value: T) {
+        this.setCachedValueAndNotify(value);
+    }
+
+    public startPolling(intervalMs: number) {
+        setInterval(() => this.poll(), intervalMs);
+    }
+}
+
 class WritableProperty<T> extends Property {
     constructor(private device: Device, name: string, propertyDescr: {}, private set: (value: T) => Promise<void>, private poll: () => Promise<void>) {
         super(device, name, propertyDescr);
@@ -268,8 +282,9 @@ export class ColorTemperatureLight extends Device {
 
 export class ColorLight extends Device {
     private onOffProperty: OnOffProperty;
+    private brightnessProperty: BrightnessProperty;
     private colorProperty: ColorProperty;
-    //private brightnessProperty: BrightnessProperty;
+
     constructor(adapter: Adapter, id: string, host: string, password: string, manifest: any) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
@@ -279,8 +294,8 @@ export class ColorLight extends Device {
         this.onOffProperty = new OnOffProperty(this, host, password);
         this.addProperty(this.onOffProperty);
 
-        //this.brightnessProperty = new BrightnessProperty(this, host, password);
-        //this.addProperty(this.brightnessProperty);
+        this.brightnessProperty = new BrightnessProperty(this, host, password);
+        this.addProperty(this.brightnessProperty);
 
         this.colorProperty = new ColorProperty(this, host, password, manifest);
         this.addProperty(this.colorProperty);
@@ -292,7 +307,63 @@ export class ColorLight extends Device {
 
     public startPolling(intervalMs: number) {
         this.onOffProperty.startPolling(intervalMs);
+        this.brightnessProperty.startPolling(intervalMs);
         this.colorProperty.startPolling(intervalMs);
-        //this.brightnessProperty.startPolling(intervalMs);
+    }
+}
+
+class ColorModeProperty extends PollingProperty<'color' | 'temperature'> {
+    constructor(device: Device, host: string, password: string) {
+        super(device, 'colorMode', {
+            '@type': 'ColorModeProperty',
+            label: 'Color Mode',
+            type: 'string',
+            enum: [
+                'color',
+                'temperature',
+            ],
+            readOnly: true,
+        },
+            async () => {
+                const response = await getStatus(host, password, 'Color');
+                const result = await response.json();
+                const color: string = result.Color;
+                const rgb = color.substring(0, 6);
+
+                if (rgb != '000000') {
+                    this.update('color');
+                } else {
+                    this.update('temperature');
+                }
+            });
+    }
+}
+
+export class ColorCtLight extends ColorLight {
+    private colorTemperatureProperty: ColorTemperatureProperty;
+    private colorModeProperty: ColorModeProperty;
+
+    constructor(adapter: Adapter, id: string, host: string, password: string, manifest: any) {
+        super(adapter, id, host, password, manifest);
+        this['@context'] = 'https://iot.mozilla.org/schemas/';
+        this['@type'] = ['Light'];
+        this.name = id;
+
+        this.colorTemperatureProperty = new ColorTemperatureProperty(this, host, password);
+        this.addProperty(this.colorTemperatureProperty);
+
+        this.colorModeProperty = new ColorModeProperty(this, host, password);
+        this.addProperty(this.colorModeProperty);
+    }
+
+    addProperty(property: Property) {
+        this.properties.set(property.name, property);
+    }
+
+    public startPolling(intervalMs: number) {
+        super.startPolling(intervalMs);
+
+        this.colorTemperatureProperty.startPolling(intervalMs);
+        this.colorModeProperty.startPolling(intervalMs);
     }
 }

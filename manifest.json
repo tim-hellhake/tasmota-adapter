@@ -59,6 +59,10 @@
             "useWhiteLedInColorMode": {
               "title": "Use white leds if all three color channels are equal",
               "type": "boolean"
+            },
+            "colorMode": {
+              "title": "Add brightness, color temperature and color mode properties to RGB bulbs",
+              "type": "boolean"
             }
           }
         },

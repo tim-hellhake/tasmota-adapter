@@ -12,7 +12,7 @@ import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { PowerPlug, OnOffProperty } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
-import { DimmableLight, ColorLight, ColorTemperatureLight } from './light';
+import { DimmableLight, ColorLight, ColorTemperatureLight, ColorCtLight } from './light';
 import crypto from 'crypto';
 import { setup, debug } from './logger';
 
@@ -140,6 +140,10 @@ export class TasmotaAdapter extends Adapter {
       const colorResult = await colorResponse.json();
       const color: string = colorResult?.Color || "";
 
+      const {
+        experimental
+      } = this.manifest.moziot.config;
+
       switch (color.length) {
         case 2:
           debug('Found dimmable light');
@@ -155,11 +159,23 @@ export class TasmotaAdapter extends Adapter {
           break;
         case 6:
         case 8:
-        case 10:
           debug('Found color light');
           const colorDevice = new ColorLight(this, `${name}-color`, host, password, this.manifest);
           this.handleDeviceAdded(colorDevice);
           colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+          break;
+        case 10:
+          let device;
+
+          if (experimental?.colorMode) {
+            device = new ColorCtLight(this, `${name}-color`, host, password, this.manifest);
+          } else {
+            device = new ColorLight(this, `${name}-color`, host, password, this.manifest);
+          }
+
+          debug(`Found ${device.constructor.name}`);
+          this.handleDeviceAdded(device);
+          device.startPolling(Math.max(pollInterval || 1000, 500));
           break;
       }
     }
