@@ -12,7 +12,10 @@ import { Browser, tcp } from 'dnssd';
 import { isIPv4 } from 'net';
 import { PowerPlug, OnOffProperty } from './power-plug';
 import { authConfig, getData, getStatus } from './api';
-import { DimmableLight, ColorLight, ColorTemperatureLight, ColorCtLight } from './light';
+import { ColorCtLight } from "./color-ct-light";
+import { ColorLight } from "./color-light";
+import { ColorTemperatureLight } from "./color-temperature-light";
+import { DimmableLight } from "./dimmable-light";
 import crypto from 'crypto';
 import { setup, debug } from './logger';
 
