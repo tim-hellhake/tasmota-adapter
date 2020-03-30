@@ -315,8 +315,11 @@ export class PowerPlug extends Device {
             onOffProperty.updateValue();
         }
 
-        const data = await getData(this.host);
-        this.updatePowerProperties(data);
+        try {
+            const data = await getData(this.host);
+            this.updatePowerProperties(data);
+        } catch {
+        }
     }
 
     private updatePowerProperties(data: { [name: string]: Data }) {
