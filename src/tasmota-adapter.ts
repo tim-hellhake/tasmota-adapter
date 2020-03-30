@@ -18,7 +18,7 @@ import { ColorTemperatureLight } from "./color-temperature-light";
 import { DimmableLight } from "./dimmable-light";
 import crypto from 'crypto';
 import { setup, debug } from './logger';
-import { Data } from './table-parser';
+import { DataResult } from './table-parser';
 
 export class TasmotaAdapter extends Adapter {
   private httpBrowser?: Browser;
@@ -133,7 +133,7 @@ export class TasmotaAdapter extends Adapter {
 
     if (!existingDevice) {
       debug(`Creating device ${name} (${host})`);
-      let data: { [name: string]: Data } = {};
+      let data: DataResult = {};
 
       try {
         data = await getData(url, password);

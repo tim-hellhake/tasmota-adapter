@@ -6,7 +6,9 @@
 
 'use strict';
 
-export function parse(s: string): { [name: string]: Data } {
+export type DataResult = { [name: string]: Data };
+
+export function parse(s: string): DataResult {
     const regex = /\{s\}(.+?)\{e\}/g;
     const result: { [name: string]: Data } = {};
 
