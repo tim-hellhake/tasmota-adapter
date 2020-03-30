@@ -24,6 +24,11 @@ export function authConfig(password?: string) {
 
 export async function getData(host: string, password?: string) {
     const response = await fetch(`http://${host}/?m=1`, authConfig(password));
+
+    if (response.status != 200) {
+        throw `Tasmota responded with ${response.status}`;
+    }
+
     const stats = await response.text();
     return parse(stats);
 }

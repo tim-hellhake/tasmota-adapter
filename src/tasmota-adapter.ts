@@ -18,6 +18,7 @@ import { ColorTemperatureLight } from "./color-temperature-light";
 import { DimmableLight } from "./dimmable-light";
 import crypto from 'crypto';
 import { setup, debug } from './logger';
+import { Data } from './table-parser';
 
 export class TasmotaAdapter extends Adapter {
   private httpBrowser?: Browser;
@@ -132,7 +133,14 @@ export class TasmotaAdapter extends Adapter {
 
     if (!existingDevice) {
       debug(`Creating device ${name} (${host})`);
-      const data = await getData(url);
+      let data: { [name: string]: Data } = {};
+
+      try {
+        data = await getData(url, password);
+      } catch (e) {
+        console.warn(`Could not get data: ${e}`);
+      }
+
       const channels = await OnOffProperty.getAvailableChannels(host, password);
       const device = new PowerPlug(this, name, this.manifest, host, password, data, channels);
       this.devices[name] = device;
