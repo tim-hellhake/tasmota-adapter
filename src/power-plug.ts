@@ -135,7 +135,7 @@ export class PowerPlug extends Device {
     private temperatureProperty?: TemperatureProperty;
     private humidityProperty?: HumidityProperty;
 
-    constructor(adapter: Adapter, id: string, manifest: any, private host: string, password: string, data: { [name: string]: Data }, channels: number[]) {
+    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: number[]) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
@@ -316,7 +316,7 @@ export class PowerPlug extends Device {
         }
 
         try {
-            const data = await getData(this.host);
+            const data = await getData(this.host, this.password);
             this.updatePowerProperties(data);
         } catch {
         }
