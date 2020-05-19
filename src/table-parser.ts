@@ -108,6 +108,32 @@ export function findHumidityProperties(properties: { [name: string]: Data }): { 
     return result;
 }
 
+export function findDewPointProperty(properties: { [name: string]: Data }): { name: string, data: Data } | undefined {
+    for (let [name, data] of Object.entries(properties)) {
+        if (name.toLowerCase().indexOf('dew point') > -1) {
+            return {
+                name,
+                data
+            }
+        }
+    }
+
+    return undefined;
+}
+
+export function findPressureProperty(properties: { [name: string]: Data }): { name: string, data: Data } | undefined {
+    for (let [name, data] of Object.entries(properties)) {
+        if (name.toLowerCase().indexOf('pressure') > -1) {
+            return {
+                name,
+                data
+            }
+        }
+    }
+
+    return undefined;
+}
+
 export interface Data {
     value: number,
     symbol?: string,

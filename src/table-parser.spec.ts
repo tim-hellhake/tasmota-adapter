@@ -244,3 +244,15 @@ describe('Table parser', () => {
         expect(result['Bath']?.symbol).to.equal('%');
     });
 });
+
+describe('Table parser', () => {
+    it('should parse dew point and pressure correctly', () => {
+        const tableString = '{t}{s}BME280 Dew point{m}9.7°C{e}{s}BME280 Pressure{m}987.9hPa{e}{t}OFF';
+        const result = parse(tableString);
+        expect(Object.keys(result)).to.have.length(2);
+        expect(result['BME280 Dew point']?.value).to.equal(9.7);
+        expect(result['BME280 Dew point']?.symbol).to.equal('°C');
+        expect(result['BME280 Pressure']?.value).to.equal(987.9);
+        expect(result['BME280 Pressure']?.symbol).to.equal('hPa');
+    });
+});

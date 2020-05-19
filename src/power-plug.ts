@@ -7,7 +7,7 @@
 'use strict';
 
 import { Adapter, Device, Property } from 'gateway-addon';
-import { Data, findTemperatureProperty, findHumidityProperty } from './table-parser';
+import { Data, findTemperatureProperty, findHumidityProperty, findDewPointProperty, findPressureProperty } from './table-parser';
 import { CommandResult, getData, getStatus, setStatus } from './api';
 import { debug } from './logger';
 
@@ -121,6 +121,34 @@ class HumidityProperty extends Property {
     }
 }
 
+class DewPointProperty extends Property {
+    constructor(device: Device, public dataName: string, data: Data) {
+        super(device, 'dewPoint', {
+            type: 'number',
+            unit: data.symbol,
+            multipleOf: 0.1,
+            title: 'Dew point',
+            readOnly: true
+        });
+
+        this.setCachedValueAndNotify(data.value);
+    }
+}
+
+class PressureProperty extends Property {
+    constructor(device: Device, public dataName: string, data: Data) {
+        super(device, 'pressure', {
+            type: 'number',
+            unit: data.symbol,
+            multipleOf: 0.1,
+            title: 'Pressure',
+            readOnly: true
+        });
+
+        this.setCachedValueAndNotify(data.value);
+    }
+}
+
 export class PowerPlug extends Device {
     private onOffProperties: OnOffProperty[] = [];
     private voltageProperty?: Property;
@@ -134,6 +162,8 @@ export class PowerPlug extends Device {
     private energyTotalProperty?: Property;
     private temperatureProperty?: TemperatureProperty;
     private humidityProperty?: HumidityProperty;
+    private dewPointProperty?: DewPointProperty;
+    private pressureProperty?: PressureProperty;
 
     constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: number[]) {
         super(adapter, id);
@@ -299,6 +329,24 @@ export class PowerPlug extends Device {
             }
         }
 
+        if (experimental?.temperatureSensor === true) {
+            const dewPoint = findDewPointProperty(data);
+
+            if (dewPoint) {
+                this.dewPointProperty = new DewPointProperty(this, dewPoint.name, dewPoint.data);
+                this.addProperty(this.dewPointProperty);
+            }
+        }
+
+        if (experimental?.temperatureSensor === true) {
+            const pressure = findPressureProperty(data);
+
+            if (pressure) {
+                this.pressureProperty = new PressureProperty(this, pressure.name, pressure.data);
+                this.addProperty(this.pressureProperty);
+            }
+        }
+
         this.updatePowerProperties(data);
     }
 
@@ -385,6 +433,16 @@ export class PowerPlug extends Device {
         if (this.humidityProperty) {
             const humidityData = data[this.humidityProperty.dataName];
             this.humidityProperty.setCachedValueAndNotify(humidityData.value);
+        }
+
+        if (this.dewPointProperty) {
+            const dewPointData = data[this.dewPointProperty.dataName];
+            this.dewPointProperty.setCachedValueAndNotify(dewPointData.value);
+        }
+
+        if (this.pressureProperty) {
+            const pressureData = data[this.pressureProperty.dataName];
+            this.pressureProperty.setCachedValueAndNotify(pressureData.value);
         }
     }
 }
