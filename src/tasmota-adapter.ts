@@ -52,8 +52,7 @@ export class TasmotaAdapter extends Adapter {
     debug(`Loading devices from config`);
 
     const {
-      pollInterval,
-      password
+      pollInterval
     } = this.manifest.moziot.config;
 
     const db = new Database(this.manifest.name);
@@ -64,7 +63,8 @@ export class TasmotaAdapter extends Adapter {
       for (const device of config.devices) {
         const {
           hostname,
-          port
+          port,
+          password
         } = device;
 
         if (!device.id) {
