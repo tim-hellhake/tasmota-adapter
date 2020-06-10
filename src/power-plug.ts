@@ -53,7 +53,7 @@ export class OnOffProperty extends Property {
     async updateValue() {
         const response = await getStatus(this.host, this.password, `Power${this.channel}`);
         const result = await response.json();
-        const value = result.POWER == 'ON';
+        const value = result[`POWER${this.channel}`] == 'ON';
 
         if (this.lastState != value) {
             this.lastState = value;
