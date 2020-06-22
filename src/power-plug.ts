@@ -63,15 +63,31 @@ export class OnOffProperty extends Property {
     }
 
     static async getAvailableChannels(host: string, password: string) {
-        const channels: number[] = [];
+        const channels: Channel[] = [];
+        const friendlyNameResult = await OnOffProperty.getFriendlyNames(host, password);
 
         for (let i = 1; i < 10; i++) {
             if (await OnOffProperty.isAvailable(host, password, i)) {
-                channels.push(i);
+                const friendlyName = friendlyNameResult[`FriendlyName${i}`];
+
+                channels.push({
+                    id: i,
+                    friendlyName
+                });
+
+                debug(`Detected channel ${i} (${friendlyName})`);
+            } else {
+                debug(`Channel ${i} not available`);
             }
         }
 
         return channels;
+    }
+
+    static async getFriendlyNames(host: string, password: string) {
+        const result = await getStatus(host, password, 'FriendlyName');
+        const json = await result.json();
+        return json;
     }
 
     static async isAvailable(host: string, password: string, channel: number) {
@@ -81,14 +97,13 @@ export class OnOffProperty extends Property {
         const status = json[command];
         const available = status === 'ON' || status === 'OFF';
 
-        if (available) {
-            debug(`Detected channel ${channel}`);
-        } else {
-            debug(`Channel ${channel} not available: ${JSON.stringify(json)}`);
-        }
-
         return available;
     }
+}
+
+interface Channel {
+    id: number,
+    friendlyName: string | undefined
 }
 
 class TemperatureProperty extends Property {
@@ -165,7 +180,7 @@ export class PowerPlug extends Device {
     private dewPointProperty?: DewPointProperty;
     private pressureProperty?: PressureProperty;
 
-    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: number[]) {
+    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: Channel[]) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
@@ -181,9 +196,10 @@ export class PowerPlug extends Device {
             this.addProperty(onOffProperty);
 
             for (const channel of channels) {
-                const id = `on${channel}`;
-                debug(`Creating property for channel ${channel}`);
-                const onOffProperty = new OnOffProperty(this, id, `Channel ${channel}`, host, password, `${channel}`);
+                const id = `on${channel.id}`;
+                const name = channel.friendlyName || `Channel ${channel}`;
+                debug(`Creating property for channel ${id} (${name})`);
+                const onOffProperty = new OnOffProperty(this, id, name, host, password, `${channel.id}`);
                 this.onOffProperties.push(onOffProperty);
                 this.addProperty(onOffProperty);
             }
