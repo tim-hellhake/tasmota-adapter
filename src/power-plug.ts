@@ -190,7 +190,7 @@ export class PowerPlug extends Device {
             experimental
         } = manifest.moziot.config;
 
-        if (experimental?.multiChannelRelay === true && channels.length > 0) {
+        if (experimental?.multiChannelRelay === true && channels.length > 1) {
             const onOffProperty = new OnOffProperty(this, 'on', 'All', host, password, '0');
             this.onOffProperties.push(onOffProperty);
             this.addProperty(onOffProperty);
