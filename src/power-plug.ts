@@ -180,7 +180,7 @@ export class PowerPlug extends Device {
     private dewPointProperty?: DewPointProperty;
     private pressureProperty?: PressureProperty;
 
-    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: Channel[]) {
+    constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: Channel[], friendlyName: string | undefined) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
         this['@type'] = ['SmartPlug', 'TemperatureSensor'];
@@ -204,6 +204,9 @@ export class PowerPlug extends Device {
                 this.addProperty(onOffProperty);
             }
         } else {
+            if(friendlyName) {
+                this.name = `${friendlyName} (${this.name})`;
+            }
             const onOffProperty = new OnOffProperty(this, 'on', 'On', host, password, '');
             this.onOffProperties.push(onOffProperty);
             this.addProperty(onOffProperty);
