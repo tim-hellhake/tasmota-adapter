@@ -52,10 +52,6 @@
               "title": "Enable temperature sensor support",
               "type": "boolean"
             },
-            "multiChannelRelay": {
-              "title": "Enable support for multiple relay channels",
-              "type": "boolean"
-            },
             "useWhiteLedInColorMode": {
               "title": "Use white leds if all three color channels are equal",
               "type": "boolean"
