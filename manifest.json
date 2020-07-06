@@ -32,7 +32,7 @@
         },
         "password": {
           "type": "string",
-          "title": "The web admin password of your device (if set)"
+          "title": "The web admin password of your auto-discovered devices (if set)"
         },
         "logging": {
           "type": "object",
@@ -84,6 +84,10 @@
               "port": {
                 "type": "integer",
                 "title": "The port of the web interface of the device (default is 80)"
+              },
+              "password": {
+                "type": "string",
+                "title": "The web admin password of your device (if set)"
               }
             }
           }

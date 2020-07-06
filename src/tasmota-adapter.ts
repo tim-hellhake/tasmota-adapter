@@ -56,6 +56,8 @@ export class TasmotaAdapter extends Adapter {
       password
     } = this.manifest.moziot.config;
 
+    const defaultPassword = password;
+
     const db = new Database(this.manifest.name);
     await db.open();
     const config = await db.loadConfig();
@@ -64,7 +66,8 @@ export class TasmotaAdapter extends Adapter {
       for (const device of config.devices) {
         const {
           hostname,
-          port
+          port,
+          password
         } = device;
 
         if (!device.id) {
@@ -73,7 +76,7 @@ export class TasmotaAdapter extends Adapter {
         }
 
         const url = `${hostname}:${port}`;
-        await this.createDevice(url, hostname, hostname, password, pollInterval);
+        await this.createDevice(url, hostname, hostname, password || defaultPassword, pollInterval);
       }
     }
 
