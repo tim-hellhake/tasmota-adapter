@@ -204,6 +204,9 @@ export class TasmotaAdapter extends Adapter {
         this.handleDeviceAdded(device);
         device.startPolling(Math.max(pollInterval || 1000, 500));
         break;
+      default:
+        console.log(`Unexpected color length: ${color.length}`);
+        break;
     }
   }
 
