@@ -136,63 +136,74 @@ export class TasmotaAdapter extends Adapter {
 
     if (!existingDevice) {
       debug(`Creating device ${name} (${host})`);
-      let data: DataResult = {};
-
-      try {
-        data = await getData(url, password);
-      } catch (e) {
-        console.warn(`Could not get data: ${e}`);
-      }
-
-      const channels = await OnOffProperty.getAvailableChannels(host, password);
-      const friendlyNames = await OnOffProperty.getFriendlyNames(host, password);
-      const device = new PowerPlug(this, name, this.manifest, host, password, data, channels, friendlyNames['FriendlyName1']);
-      this.devices[name] = device;
-      this.handleDeviceAdded(device);
-      device.startPolling(Math.max(pollInterval || 1000, 500));
 
       const colorResponse = await getStatus(host, password, 'Color');
       const colorResult = await colorResponse.json();
       const color: string = colorResult?.Color || "";
 
-      const {
-        experimental
-      } = this.manifest.moziot.config;
-
-      switch (color.length) {
-        case 2:
-          debug('Found dimmable light');
-          const dimmableLight = new DimmableLight(this, `${name}-light`, host, password);
-          this.handleDeviceAdded(dimmableLight);
-          dimmableLight.startPolling(Math.max(pollInterval || 1000, 500));
-          break;
-        case 4:
-          debug('Found color temperature light');
-          const colorTemperatureLight = new ColorTemperatureLight(this, `${name}-light`, host, password);
-          this.handleDeviceAdded(colorTemperatureLight);
-          colorTemperatureLight.startPolling(Math.max(pollInterval || 1000, 500));
-          break;
-        case 6:
-        case 8:
-          debug('Found color light');
-          const colorDevice = new ColorLight(this, `${name}-color`, host, password, this.manifest);
-          this.handleDeviceAdded(colorDevice);
-          colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
-          break;
-        case 10:
-          let device;
-
-          if (experimental?.colorMode) {
-            device = new ColorCtLight(this, `${name}-color`, host, password, this.manifest);
-          } else {
-            device = new ColorLight(this, `${name}-color`, host, password, this.manifest);
-          }
-
-          debug(`Found ${device.constructor.name}`);
-          this.handleDeviceAdded(device);
-          device.startPolling(Math.max(pollInterval || 1000, 500));
-          break;
+      if (color) {
+        this.createLight(name, host, password, pollInterval, color);
+      } else {
+        this.createPowerPlug(url, name, host, password, pollInterval);
       }
+    }
+  }
+
+  private async createPowerPlug(url: string, name: string, host: string, password: string, pollInterval: number) {
+    let data: DataResult = {};
+
+    try {
+      data = await getData(url, password);
+    } catch (e) {
+      console.warn(`Could not get data: ${e}`);
+    }
+
+    const channels = await OnOffProperty.getAvailableChannels(host, password);
+    const friendlyNames = await OnOffProperty.getFriendlyNames(host, password);
+    const device = new PowerPlug(this, name, this.manifest, host, password, data, channels, friendlyNames['FriendlyName1']);
+    this.devices[name] = device;
+    this.handleDeviceAdded(device);
+    device.startPolling(Math.max(pollInterval || 1000, 500));
+  }
+
+  private createLight(name: string, host: string, password: string, pollInterval: number, color: string) {
+    const {
+      experimental
+    } = this.manifest.moziot.config;
+
+    switch (color.length) {
+      case 2:
+        debug('Found dimmable light');
+        const dimmableLight = new DimmableLight(this, `${name}-light`, host, password);
+        this.handleDeviceAdded(dimmableLight);
+        dimmableLight.startPolling(Math.max(pollInterval || 1000, 500));
+        break;
+      case 4:
+        debug('Found color temperature light');
+        const colorTemperatureLight = new ColorTemperatureLight(this, `${name}-light`, host, password);
+        this.handleDeviceAdded(colorTemperatureLight);
+        colorTemperatureLight.startPolling(Math.max(pollInterval || 1000, 500));
+        break;
+      case 6:
+      case 8:
+        debug('Found color light');
+        const colorDevice = new ColorLight(this, `${name}-color`, host, password, this.manifest);
+        this.handleDeviceAdded(colorDevice);
+        colorDevice.startPolling(Math.max(pollInterval || 1000, 500));
+        break;
+      case 10:
+        let device;
+
+        if (experimental?.colorMode) {
+          device = new ColorCtLight(this, `${name}-color`, host, password, this.manifest);
+        } else {
+          device = new ColorLight(this, `${name}-color`, host, password, this.manifest);
+        }
+
+        debug(`Found ${device.constructor.name}`);
+        this.handleDeviceAdded(device);
+        device.startPolling(Math.max(pollInterval || 1000, 500));
+        break;
     }
   }
 
