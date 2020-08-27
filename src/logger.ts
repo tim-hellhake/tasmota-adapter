@@ -15,3 +15,13 @@ export function setup(debug: boolean): void {
 export function debug(message?: any, ...optionalParams: any[]): void {
     debugLogger(message, optionalParams);
 }
+
+export async function measureAsync<T>(action: String, fn: () => Promise<T>): Promise<T> {
+    const millis = () => new Date().getTime();
+    const start = millis();
+    const result = await fn();
+    const diff = millis() - start;
+    debug(`Executed ${action} in ${diff} ms`);
+
+    return result;
+}

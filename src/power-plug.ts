@@ -9,7 +9,7 @@
 import { Adapter, Device, Property } from 'gateway-addon';
 import { Data, findTemperatureProperty, findHumidityProperty, findDewPointProperty, findPressureProperty } from './table-parser';
 import { CommandResult, getData, getStatus, setStatus } from './api';
-import { debug } from './logger';
+import { debug, measureAsync } from './logger';
 
 export class OnOffProperty extends Property {
     private lastState?: boolean;
@@ -28,7 +28,10 @@ export class OnOffProperty extends Property {
             debug(`Set value of ${this.device.name} / ${this.title} to ${value}`);
             await super.setValue(value);
             const status = value ? 'ON' : 'OFF';
-            const result = await setStatus(this.host, this.password, `Power${this.channel}`, status);
+            const result = await measureAsync("setStatus", () =>
+                setStatus(this.host, this.password, `Power${this.channel}`, status)
+            );
+            debug(``)
 
             if (result.status != 200) {
                 debug(`Could not set status: ${result.statusText} (${result.status})`);
@@ -51,7 +54,9 @@ export class OnOffProperty extends Property {
     }
 
     async updateValue() {
-        const response = await getStatus(this.host, this.password, `Power${this.channel}`);
+        const response = await measureAsync("getStatus", () =>
+            getStatus(this.host, this.password, `Power${this.channel}`)
+        );
         const result = await response.json();
         const value = result[`POWER${this.channel}`] == 'ON';
 
@@ -385,7 +390,9 @@ export class PowerPlug extends Device {
         }
 
         try {
-            const data = await getData(this.host, this.password);
+            const data = await measureAsync("getStatus", () =>
+                getData(this.host, this.password)
+            );
             this.updatePowerProperties(data);
         } catch {
         }
