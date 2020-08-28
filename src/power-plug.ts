@@ -11,10 +11,38 @@ import { Data, findTemperatureProperty, findHumidityProperty, findDewPointProper
 import { CommandResult, getData, getStatus, setStatus } from './api';
 import { debug, measureAsync } from './logger';
 
+class MasterOnOffProperty extends Property {
+    constructor(device: Device, private onOffProperties: Property[]) {
+        super(device, 'on', {
+            '@type': 'OnOffProperty',
+            type: 'boolean',
+            title: 'All',
+            description: 'Turn all devices on or off'
+        });
+    }
+
+    async setValue(value: boolean) {
+        for (const onOffProperty of this.onOffProperties) {
+            onOffProperty.setValue(value);
+        }
+    }
+
+    check() {
+        for (const onOffProperty of this.onOffProperties) {
+            if (onOffProperty.value == true) {
+                this.setCachedValueAndNotify(true);
+                return;
+            }
+        }
+
+        this.setCachedValueAndNotify(false);
+    }
+}
+
 export class OnOffProperty extends Property {
     private lastState?: boolean;
 
-    constructor(private device: Device, id: string, title: string, private host: string, private password: string, private channel: string) {
+    constructor(private device: Device, id: string, title: string, private host: string, private password: string, private channel: string, private master?: MasterOnOffProperty) {
         super(device, id, {
             '@type': 'OnOffProperty',
             type: 'boolean',
@@ -27,6 +55,7 @@ export class OnOffProperty extends Property {
         try {
             debug(`Set value of ${this.device.name} / ${this.title} to ${value}`);
             await super.setValue(value);
+            this.master?.check();
             const status = value ? 'ON' : 'OFF';
             const result = await measureAsync("setStatus", () =>
                 setStatus(this.host, this.password, `Power${this.channel}`, status)
@@ -63,6 +92,7 @@ export class OnOffProperty extends Property {
         if (this.lastState != value) {
             this.lastState = value;
             this.setCachedValueAndNotify(value);
+            this.master?.check();
             debug(`Value of ${this.device.name} / ${this.title} changed to ${value}`);
         }
     }
@@ -196,15 +226,14 @@ export class PowerPlug extends Device {
         } = manifest.moziot.config;
 
         if (channels.length > 1) {
-            const onOffProperty = new OnOffProperty(this, 'on', 'All', host, password, '0');
-            this.onOffProperties.push(onOffProperty);
-            this.addProperty(onOffProperty);
+            const masterOnOffProperty = new MasterOnOffProperty(this, this.onOffProperties);
+            this.addProperty(masterOnOffProperty);
 
             for (const channel of channels) {
                 const id = `on${channel.id}`;
                 const name = channel.friendlyName || `Channel ${channel}`;
                 debug(`Creating property for channel ${id} (${name})`);
-                const onOffProperty = new OnOffProperty(this, id, name, host, password, `${channel.id}`);
+                const onOffProperty = new OnOffProperty(this, id, name, host, password, `${channel.id}`, masterOnOffProperty);
                 this.onOffProperties.push(onOffProperty);
                 this.addProperty(onOffProperty);
             }
