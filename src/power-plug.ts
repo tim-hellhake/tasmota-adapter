@@ -101,18 +101,28 @@ export class OnOffProperty extends Property {
         const channels: Channel[] = [];
         const friendlyNameResult = await OnOffProperty.getFriendlyNames(host, password);
 
-        for (let i = 1; i < 10; i++) {
-            if (await OnOffProperty.isAvailable(host, password, i)) {
-                const friendlyName = friendlyNameResult[`FriendlyName${i}`];
+        if (await OnOffProperty.isAvailable(host, password, '')) {
+            debug('Main channel detected');
+            const friendlyName = friendlyNameResult['FriendlyName1'];
 
-                channels.push({
-                    id: i,
-                    friendlyName
-                });
+            channels.push({
+                id: '',
+                friendlyName
+            });
+        } else {
+            for (let i = 1; i < 10; i++) {
+                if (await OnOffProperty.isAvailable(host, password, `${i}`)) {
+                    const friendlyName = friendlyNameResult[`FriendlyName${i}`];
 
-                debug(`Detected channel ${i} (${friendlyName})`);
-            } else {
-                debug(`Channel ${i} not available`);
+                    channels.push({
+                        id: `${i}`,
+                        friendlyName
+                    });
+
+                    debug(`Detected channel ${i} (${friendlyName})`);
+                } else {
+                    debug(`Channel ${i} not available`);
+                }
             }
         }
 
@@ -125,7 +135,7 @@ export class OnOffProperty extends Property {
         return json;
     }
 
-    static async isAvailable(host: string, password: string, channel: number) {
+    static async isAvailable(host: string, password: string, channel: string) {
         const command = `POWER${channel}`;
         const result = await getStatus(host, password, command);
         const json = await result.json();
@@ -137,7 +147,7 @@ export class OnOffProperty extends Property {
 }
 
 interface Channel {
-    id: number,
+    id: string,
     friendlyName: string | undefined
 }
 
@@ -218,7 +228,7 @@ export class PowerPlug extends Device {
     constructor(adapter: Adapter, id: string, manifest: any, private host: string, private password: string, data: { [name: string]: Data }, channels: Channel[], friendlyName: string | undefined) {
         super(adapter, id);
         this['@context'] = 'https://iot.mozilla.org/schemas/';
-        this['@type'] = ['SmartPlug'];
+        this['@type'] = [];
         this.name = id.replace('.local', '');
 
         const {
@@ -226,6 +236,8 @@ export class PowerPlug extends Device {
         } = manifest.moziot.config;
 
         if (channels.length > 1) {
+            this['@type'].push('SmartPlug');
+
             const masterOnOffProperty = new MasterOnOffProperty(this, this.onOffProperties);
             this.addProperty(masterOnOffProperty);
 
@@ -241,9 +253,16 @@ export class PowerPlug extends Device {
             if (friendlyName) {
                 this.name = `${friendlyName} (${this.name})`;
             }
-            const onOffProperty = new OnOffProperty(this, 'on', 'On', host, password, '');
-            this.onOffProperties.push(onOffProperty);
-            this.addProperty(onOffProperty);
+
+            if (channels.length > 0) {
+                this['@type'].push('SmartPlug');
+                debug('Creating property for main channel');
+                const onOffProperty = new OnOffProperty(this, 'on', 'On', host, password, '');
+                this.onOffProperties.push(onOffProperty);
+                this.addProperty(onOffProperty);
+            } else {
+                console.log('No main channel found, seems to be a sensor node');
+            }
         }
 
         debug(`Parsed data: ${JSON.stringify(data)}`);

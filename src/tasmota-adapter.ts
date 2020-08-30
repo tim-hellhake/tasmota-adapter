@@ -159,6 +159,7 @@ export class TasmotaAdapter extends Adapter {
     }
 
     const channels = await OnOffProperty.getAvailableChannels(host, password);
+    debug(`Found channels ${JSON.stringify(channels)}`);
     const friendlyNames = await OnOffProperty.getFriendlyNames(host, password);
     const device = new PowerPlug(this, name, this.manifest, host, password, data, channels, friendlyNames['FriendlyName1']);
     this.devices[name] = device;
