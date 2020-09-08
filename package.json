@@ -45,13 +45,13 @@
   ],
   "dependencies": {
     "dnssd": "^0.4.1",
-    "node-fetch": "^2.6.0"
+    "node-fetch": "^2.6.1"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",
     "@types/dnssd": "^0.4.1",
     "@types/mocha": "^7.0.2",
-    "@types/node": "^14.6.2",
+    "@types/node": "^14.6.4",
     "@types/node-fetch": "^2.5.7",
     "chai": "^4.2.0",
     "mocha": "^7.2.0",
