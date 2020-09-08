@@ -83,14 +83,43 @@ export class TasmotaAdapter extends Adapter {
     await db.saveConfig(config);
   }
 
-  private startDiscovery() {
+  private async startDiscovery() {
     debug('Starting discovery');
+
+    const db = new Database(this.manifest.name);
+    await db.open();
+    const config = await db.loadConfig();
+    const blacklist: string[] = [];
+
+    if (config.devices) {
+      for (const device of config.devices) {
+        const {
+          hostname,
+        } = device;
+
+        blacklist.push(hostname);
+      }
+    }
+
     this.httpBrowser = new Browser(tcp('http'));
 
     this.httpBrowser.on('serviceUp', async service => {
       const host = this.removeTrailingDot(service.host);
       debug(`Discovered http service at ${host}`);
-      const addresses: string[] = service?.addresses;
+      const addresses: string[] = service?.addresses || [];
+
+      if (blacklist.indexOf(host) > -1) {
+        debug(`Ignoring ${host} because ${host} was already configured manually`);
+        return;
+      }
+
+      for (const address of addresses) {
+        if (blacklist.indexOf(address) > -1) {
+          debug(`Ignoring ${host} because ${address} was already configured manually`);
+          return;
+        }
+      }
+
       this.handleService(host, addresses.filter(isIPv4)[0] || host, service.port);
     });
 
