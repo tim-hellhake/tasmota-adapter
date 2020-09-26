@@ -101,12 +101,14 @@ export class TasmotaAdapter extends Adapter {
       }
     }
 
+    console.log(`Ignoring ${JSON.stringify(blacklist)}`);
+
     this.httpBrowser = new Browser(tcp('http'));
 
     this.httpBrowser.on('serviceUp', async service => {
       const host = this.removeTrailingDot(service.host);
-      debug(`Discovered http service at ${host}`);
       const addresses: string[] = service?.addresses || [];
+      debug(`Discovered http service at ${host} (${JSON.stringify(addresses)}])`);
 
       if (blacklist.indexOf(host) > -1) {
         debug(`Ignoring ${host} because ${host} was already configured manually`);
