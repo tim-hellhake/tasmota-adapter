@@ -75,7 +75,7 @@ export class TasmotaAdapter extends Adapter {
           debug(`Adding id for device at ${hostname}`);
         }
 
-        const url = `${hostname}:${port}`;
+        const url = `${hostname}:${port || 80}`;
         await this.createDevice(url, hostname, hostname, password || defaultPassword, pollInterval);
       }
     }
